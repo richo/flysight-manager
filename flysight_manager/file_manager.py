@@ -26,7 +26,7 @@ class MountPoller(object):
 
     def raise_unless_attached(self):
         if not self._flysight_attached():
-            raise NotMountedError()
+            raise NotMountedError("Flysight is not mounted")
 
 
 class Unmounter(object):
