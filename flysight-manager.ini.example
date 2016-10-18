@@ -1,0 +1,5 @@
+[flysight-manager]
+
+mountpoint=/mnt/flysight
+storage_backend=dropbox
+dropbox_token=TOKEN_GOES_HERE

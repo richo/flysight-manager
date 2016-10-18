@@ -7,7 +7,6 @@ import log
 from .config import Configuration
 from .file_manager import MountPoller, Unmounter
 from .flysight import Flysight
-from .uploader import DropboxUploader
 
 
 def get_argparser():
@@ -15,13 +14,6 @@ def get_argparser():
     parser.add_argument('--daemon', action='store_true',
                         help='Run in daemon mode')
     return parser
-
-
-def get_uploader(cfg):
-    if cfg.storage_backend == 'dropbox':
-        return DropboxUploader(cfg.dropbox_credentials())
-    else:
-        log.fatal("Unknown backend: %s" % cfg.storage_backend)
 
 
 @log.catch_exceptions
@@ -39,11 +31,10 @@ def main():
         else:
             poller.raise_unless_attached()
         flysight = Flysight(cfg.flysight_mountpoint)
-        uploader = get_uploader(cfg)
 
         for flight in flysight.flights():
             with open(flight.fs_path, 'rb') as fh:
-                uploader.upload(fh, flight.raw_path)
+                cfg.uploader.upload(fh, flight.raw_path)
             log.info("Removing %s" % flight.fs_path)
             os.unlink(flight.fs_path)
 
