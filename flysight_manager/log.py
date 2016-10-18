@@ -7,7 +7,7 @@ import traceback
 # Oh god why isn't there a standard package for this.
 def make_logger(c, enabled=lambda: True):
     def inner(msg, args=()):
-        if enabled:
+        if enabled():
             fmt = "[%s] %s" % (c, msg)
             # Cope gracefully with printf style invocations
             print(fmt % args)

@@ -8,6 +8,7 @@ from .uploader import DropboxUploader
 
 SECT = 'flysight-manager'
 
+
 class ConfigError(Exception):
     pass
 
