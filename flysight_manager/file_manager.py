@@ -16,7 +16,7 @@ class MountPoller(object):
         self.interval = 10
 
     def _flysight_attached(self):
-        return os.path.isdir(self.path)
+        return os.path.exists(os.path.join(self.path, 'config.txt'))
 
     def poll_for_attach(self):
         while not self._flysight_attached():
