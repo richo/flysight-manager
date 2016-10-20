@@ -8,6 +8,8 @@ At it's simplest:
 * Get a dropbox token. Put it in .flysight-token
 * Configure your mounter (see below)
 * edit `config.ini.example` and save as `config.ini`
+    * You can use https://flysight-manager.herokuapp.com to generate a config
+      and authorize with dropbox
 * Configure your system to allow whichever user you'll run this as to `sudo
   umount $mountpoint` without a password.
 * Test run without arguments
