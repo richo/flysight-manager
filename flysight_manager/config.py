@@ -4,6 +4,8 @@ if sys.version_info.major == 2:
 else:
     import configparser
 
+import log
+
 from .uploader import DropboxUploader
 
 SECT = 'flysight-manager'
@@ -22,9 +24,12 @@ class Configuration(object):
         'dropbox_token': None,
     }
 
+    CONFIG_FILE = 'flysight-manager.ini'
+
     def __init__(self):
         cfg = configparser.RawConfigParser(self.defaults)
-        cfg.read(('flysight-manager.ini'),)
+        log.info("Loading config from %s" % self.CONFIG_FILE)
+        cfg.read((self.CONFIG_FILE),)
         self.load_config(cfg)
 
         self._uploader = None
@@ -63,5 +68,6 @@ class Configuration(object):
         return self._uploader
 
     def update_with_args(self, args):
-        # TODO
-        pass
+        if args.mountpoint:
+            log.debug("Setting mountpoint to %s from args" % self.mountpoint)
+            self.mountpoint = args.mountpoint

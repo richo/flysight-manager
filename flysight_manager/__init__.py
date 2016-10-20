@@ -13,6 +13,8 @@ def get_argparser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--daemon', action='store_true',
                         help='Run in daemon mode')
+    parser.add_argument('--mountpoint', action='store', default=None,
+                        help='Find flysight at MOUNTPOINT')
     return parser
 
 
@@ -25,7 +27,6 @@ def main():
     while True:
         log.info("Watching for flysight at %s" % cfg.flysight_mountpoint)
         poller = MountPoller(cfg.flysight_mountpoint)
-        log.info("Flysight located")
         if args.daemon:
             poller.poll_for_attach()
         else:
