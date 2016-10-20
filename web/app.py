@@ -21,7 +21,7 @@ app.secret_key = base64.b64encode(os.urandom(64))
 
 
 def get_flow():
-    redirect_uri = url_for('finish', _external=True)
+    redirect_uri = url_for('finish', _external=True, _scheme='https')
 
     return dropbox.client.DropboxOAuth2Flow(APP_KEY, APP_SECRET,
             redirect_uri, session, "dropbox-auth-csrf-token")
