@@ -1,5 +1,12 @@
 [flysight-manager]
 
+# Mountpoint on OSX, uuid of the volume on Linux
 mountpoint=/mnt/flysight
+
 storage_backend=dropbox
 dropbox_token=TOKEN_GOES_HERE
+
+[gopro-manager]
+enabled = True
+# Mountpoint on OSX, uuid of the volume on Linux
+mountpoint=/mnt/gopro
