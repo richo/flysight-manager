@@ -1,5 +1,8 @@
 import os
 import re
+import subprocess
+
+import log
 
 from collections import namedtuple
 
@@ -36,3 +39,7 @@ class Flysight(object):
                     os.path.join('/', date, 'raw', filename),
                     os.path.join('/', date, 'post', filename),
                 )
+
+    def unmount(self):
+        log.info("Trying to unmount %s" % self.path)
+        subprocess.check_call(['sudo', 'umount', self.path])

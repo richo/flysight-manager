@@ -1,12 +1,16 @@
 #!/usr/bin/env python
 
 import os
+import sys
 import argparse
 
 import log
 from .config import Configuration
-from .file_manager import MountPoller, Unmounter
-from .flysight import Flysight
+from .file_manager import DirectoryPoller, DevicePoller
+
+
+class UnsupportedPlatformError(Exception):
+    pass
 
 
 def get_argparser():
@@ -18,6 +22,17 @@ def get_argparser():
     return parser
 
 
+def get_poller():
+    # TODO: This does the wrong thing if you specify --mountpoint on linux
+    platform = sys.platform
+    if platform.startswith('linux'):
+        return DevicePoller
+    elif platform == 'darwin':
+        return DirectoryPoller
+    else:
+        raise UnsupportedPlatformError('Unknown platform: %s' % platform)
+
+
 @log.catch_exceptions
 def main():
     args = get_argparser().parse_args()
@@ -26,12 +41,12 @@ def main():
 
     while True:
         log.info("Watching for flysight at %s" % cfg.flysight_mountpoint)
-        poller = MountPoller(cfg.flysight_mountpoint)
+        poller = get_poller(cfg.flysight_mountpoint)
         if args.daemon:
             poller.poll_for_attach()
         else:
             poller.raise_unless_attached()
-        flysight = Flysight(cfg.flysight_mountpoint)
+        flysight = poller.mount(cfg.flysight_mountpoint)
 
         for flight in flysight.flights():
             with open(flight.fs_path, 'rb') as fh:
@@ -44,7 +59,7 @@ def main():
             log.info("Removing %s" % date)
             os.rmdir(os.path.join(cfg.flysight_mountpoint, date))
 
-        Unmounter(cfg.flysight_mountpoint).unmount()
+        flysight.unmount()
         if not args.daemon:
             break
     log.info("Done")
