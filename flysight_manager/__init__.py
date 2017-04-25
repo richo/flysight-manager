@@ -24,6 +24,11 @@ def main():
     cfg = Configuration()
     cfg.update_with_args(args)
 
+    wrapper = log.catch_exceptions
+    if args.daemon:
+        log.info("Setting up retry wrapper")
+        wrapper = log.catch_exceptions_and_retry
+
     while True:
         log.info("Watching for flysight at %s" % cfg.flysight_mountpoint)
         poller = MountPoller(cfg.flysight_mountpoint)
@@ -33,16 +38,26 @@ def main():
             poller.raise_unless_attached()
         flysight = Flysight(cfg.flysight_mountpoint)
 
-        for flight in flysight.flights():
-            with open(flight.fs_path, 'rb') as fh:
-                cfg.uploader.upload(fh, flight.raw_path)
-            log.info("Removing %s" % flight.fs_path)
-            os.unlink(flight.fs_path)
 
-        log.info("Done uploading, cleaning directories")
-        for date in flysight.dates():
-            log.info("Removing %s" % date)
-            os.rmdir(os.path.join(cfg.flysight_mountpoint, date))
+        @wrapper
+        def network_operations():
+            """Encapsulate network operations that might fail.
+
+            If wrapper is catch_exceptions_and_retry,
+            this block may be invoked more than once, but
+            that's safe.
+            """
+            for flight in flysight.flights():
+                with open(flight.fs_path, 'rb') as fh:
+                    cfg.uploader.upload(fh, flight.raw_path)
+                log.info("Removing %s" % flight.fs_path)
+                os.unlink(flight.fs_path)
+
+            log.info("Done uploading, cleaning directories")
+            for date in flysight.dates():
+                log.info("Removing %s" % date)
+                os.rmdir(os.path.join(cfg.flysight_mountpoint, date))
+        network_operations()
 
         Unmounter(cfg.flysight_mountpoint).unmount()
         if not args.daemon:

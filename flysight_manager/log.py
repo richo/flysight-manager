@@ -20,6 +20,16 @@ def fatal(msg):
 debug = make_logger("*", lambda: os.getenv("DEBUG"))
 info = make_logger("+")
 
+def catch_exceptions_and_retry(func):
+    @functools.wraps(func)
+    def inner(*args, **kwargs):
+        while True:
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                info("Caught exception: %s, continuing" % (repr(e)))
+    return inner
+
 
 def catch_exceptions(func):
     @functools.wraps(func)
