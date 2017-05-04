@@ -6,7 +6,7 @@ import argparse
 
 import log
 from .config import Configuration
-from .file_manager import DirectoryPoller, DevicePoller
+from .file_manager import DirectoryPoller, VolumePoller
 
 
 class UnsupportedPlatformError(Exception):
