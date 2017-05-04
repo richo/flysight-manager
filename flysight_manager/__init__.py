@@ -53,7 +53,6 @@ def main():
             poller.raise_unless_attached()
         flysight = poller.mount(cfg.flysight_mountpoint)
 
-
         @wrapper
         def network_operations():
             """Encapsulate network operations that might fail.
@@ -67,12 +66,12 @@ def main():
                     cfg.uploader.upload(fh, flight.raw_path)
                 log.info("Removing %s" % flight.fs_path)
                 os.unlink(flight.fs_path)
-
-            log.info("Done uploading, cleaning directories")
-            for date in flysight.dates():
-                log.info("Removing %s" % date)
-                os.rmdir(os.path.join(cfg.flysight_mountpoint, date))
         network_operations()
+
+        log.info("Done uploading, cleaning directories")
+        for date in flysight.dates():
+            log.info("Removing %s" % date)
+            os.rmdir(os.path.join(cfg.flysight_mountpoint, date))
 
         flysight.unmount()
         if not args.daemon:
