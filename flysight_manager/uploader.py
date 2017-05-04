@@ -19,9 +19,10 @@ class DropboxUploader(Uploader):
         super(DropboxUploader, self).__init__()
 
     def handle_queue(self, queue):
-        for directory in queue.get_directories():
-            for entry in directory.get_entries():
-                logical_path = os.path.join(directory.name, entry.logical_path)
+        for name, directory in queue.get_directories().items():
+            log.info("[dropbox] processing %s" % repr(name))
+            for entry in directory:
+                logical_path = os.path.join(name, entry.logical_path)
                 log.info("[dropbox] Uploading %s to %s" % (
                     entry.physical_path, logical_path))
                 if not self.noop:

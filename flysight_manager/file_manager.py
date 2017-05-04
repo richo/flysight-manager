@@ -32,7 +32,7 @@ class AbstractPoller(object):
 class DirectoryPoller(AbstractPoller):
     def __init__(self, path):
         self.path = path
-        super(DirectoryPoller).__init__(self)
+        super(DirectoryPoller, self).__init__()
 
     def _flysight_attached(self):
         return os.path.exists(os.path.join(self.path, 'config.txt'))
@@ -42,14 +42,17 @@ class DirectoryPoller(AbstractPoller):
 
 
 class VolumePoller(AbstractPoller):
+# TODO Make this unmount on exit always
     def __init__(self, uuid):
         self.uuid = uuid
-        super(DirectoryPoller).__init__(self)
+        super(VolumePoller, self).__init__()
 
+    def _flysight_path(self):
+        return os.path.join('/', 'dev', 'disk', 'by-uuid', self.uuid)
     def _flysight_attached(self):
-        return os.path.exists(os.path.join(
-            '/', 'dev', 'disk', 'by-uuid', self.uuid))
+        return os.path.exists(self._flysight_path())
 
-    def mount(self):
-        subprocess.check_call(['sudo', 'mount', self.path])
-        return Flysight(self.path)
+    def mount(self, path):
+        subprocess.check_call(['sudo', 'mount', self._flysight_path(), path])
+        log.info("Mounted %s on %s" % (self._flysight_path(), path))
+        return Flysight(path)

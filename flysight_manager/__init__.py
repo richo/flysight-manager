@@ -34,7 +34,6 @@ def get_poller():
         raise UnsupportedPlatformError('Unknown platform: %s' % platform)
 
 
-@log.catch_exceptions
 def main():
     args = get_argparser().parse_args()
     cfg = Configuration()
@@ -46,20 +45,21 @@ def main():
         wrapper = log.catch_exceptions_and_retry
 
     while True:
-        log.info("Watching for flysight at %s" % cfg.flysight_mountpoint)
-        poller = get_poller(cfg.flysight_mountpoint)
+        log.info("Watching for flysight at %s (%s)" % (cfg.flysight_cfg.mountpoint, cfg.flysight_cfg.uuid))
+        poller_class = get_poller()
+        poller = poller_class(cfg.flysight_cfg.uuid)
         if args.daemon:
             poller.poll_for_attach()
         else:
             poller.raise_unless_attached()
-        flysight = poller.mount(cfg.flysight.mountpoint)
+        flysight = poller.mount(cfg.flysight_cfg.mountpoint)
 
         queue = UploadQueue()
 
         if cfg.flysight_enabled:
             raw_queue = queue.get_directory("raw")
             for flight in flysight.flights():
-                raw_queue.append(UploadQueueEntry(flight.raw_path, flight.raw_path))
+                raw_queue.append(UploadQueueEntry(flight.fs_path, flight.raw_path))
 
                 for processor_name in cfg.processors:
                     processor = processors.get_processor(processor_name)(cfg)
@@ -74,17 +74,7 @@ def main():
                 this block may be invoked more than once, but
                 that's safe.
                 """
-                for flight in flysight.flights():
-                    with open(flight.fs_path, 'rb') as fh:
-                        cfg.uploader.upload(fh, flight.raw_path)
-                        for processor in cfg.get_processors():
-                            product = processor.process(fh, flight.raw_path)
-                            cfg.uploader.upload(
-                                open(product.raw_path, 'rb'),
-                                product.logical_path)
-                    log.info("Removing %s" % flight.fs_path)
-                    if not cfg.noop:
-                        os.unlink(flight.fs_path)
+                cfg.uploader.handle_queue(queue)
             network_operations()
 
             log.info("Done uploading, cleaning directories")

@@ -34,6 +34,7 @@ class Flysight(object):
     def flights(self):
         for date in self.dates():
             for filename in self.files(date):
+                # TODO: Move the logical path construction into flight itself.
                 yield Flight(
                     os.path.join(self.path, date, filename),
                     os.path.join('/', date, 'raw', filename),

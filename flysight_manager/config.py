@@ -81,33 +81,29 @@ class Configuration(object):
 
     def load_dropbox_opts(self, cfg):
         get = lambda x: cfg.get("dropbox", x)
-        cfg = DropboxConfig()
-        cfg.token = get("token")
-        return cfg
+        _cfg = DropboxConfig()
+        _cfg.token = get("token")
+        return _cfg
 
     def load_gopro_opts(self, cfg):
         get = lambda x: cfg.get("gopro", x)
-        cfg = GoProConfig()
-        cfg.mountpoint = get("mountpoint")
-        cfg.uuid = get("uuid")
-        return cfg
+        _cfg = GoProConfig()
+        _cfg.mountpoint = get("mountpoint")
+        _cfg.uuid = get("uuid")
+        return _cfg
 
     def load_flysight_opts(self, cfg):
         get = lambda x: cfg.get("flysight", x)
-        cfg = FlysightConfig()
-        cfg.mountpoint = get("mountpoint")
-        cfg.uuid = get("uuid")
-        return cfg
+        _cfg = FlysightConfig()
+        _cfg.mountpoint = get("mountpoint")
+        _cfg.uuid = get("uuid")
+        return _cfg
 
     def load_gswoop_opts(self, cfg):
         get = lambda x: cfg.get("gswoop", x)
-        cfg = GswoopConfig()
-        cfg.binary = get("binary")
-        return cfg
-
-    @property
-    def flysight_mountpoint(self):
-        return self.mountpoint
+        _cfg = GswoopConfig()
+        _cfg.binary = get("binary")
+        return _cfg
 
     @property
     def uploader(self):
