@@ -15,19 +15,38 @@ class ConfigError(Exception):
     pass
 
 
+class FlysightConfig(object):
+    pass
+
+
+class DropboxConfig(object):
+    pass
+
+
+class GoProConfig(object):
+    pass
+
+
+class GswoopConfig(object):
+    pass
+
+
 class Configuration(object):
     """Stub class to be replaced by a real configuration system"""
 
     defaults = {
-        'mountpoint': None,
         'storage_backend': 'dropbox',
-        'dropbox_token': None,
         'noop': False,
     }
 
     CONFIG_FILE = 'flysight-manager.ini'
 
     def __init__(self):
+        self.flysight_enabled = False
+        self.gopro_enabled = False
+        self.gswoop_enabled = False
+
+
         cfg = configparser.RawConfigParser(self.defaults)
         log.info("Loading config from %s" % self.CONFIG_FILE)
         cfg.read((self.CONFIG_FILE),)
@@ -38,22 +57,53 @@ class Configuration(object):
     def load_config(self, cfg):
         """Validate the configuration"""
         get = lambda x: cfg.get(SECT, x)
-
-        mountpoint = get('mountpoint')
-        if mountpoint is None:
-            raise ConfigError("mountpoint is not set")
-        self.mountpoint = mountpoint
+        # TODO: Confirm how this handles bools
+        enabled = lambda x: cfg.get(x, "enabled")
 
         backend = get('storage_backend')
         if backend == 'dropbox':
             self.storage_backend = 'dropbox'
-            self.load_dropbox_opts(cfg)
+            self.dropbox_cfg = self.load_dropbox_opts(cfg)
         else:
             raise ConfigError("Unknown storage_backend: %s" % backend)
 
+        if enabled("flysight"):
+            self.flysight_enabled = True
+            self.flysight_cfg = self.load_flysight_opts(cfg)
+
+        if enabled("gopro"):
+            self.gopro_enabled = True
+            self.gopro_cfg = self.load_gopro_opts(cfg)
+
+        if enabled("gswoop"):
+            self.gswoop_enabled = True
+            self.gswoop_cfg = self.load_gswoop_opts(cfg)
+
     def load_dropbox_opts(self, cfg):
-        get = lambda x: cfg.get(SECT, x)
-        self.dropbox_token = get('dropbox_token')
+        get = lambda x: cfg.get("dropbox", x)
+        cfg = DropboxConfig()
+        cfg.token = get("token")
+        return cfg
+
+    def load_gopro_opts(self, cfg):
+        get = lambda x: cfg.get("gopro", x)
+        cfg = GoProConfig()
+        cfg.mountpoint = get("mountpoint")
+        cfg.uuid = get("uuid")
+        return cfg
+
+    def load_flysight_opts(self, cfg):
+        get = lambda x: cfg.get("flysight", x)
+        cfg = FlysightConfig()
+        cfg.mountpoint = get("mountpoint")
+        cfg.uuid = get("uuid")
+        return cfg
+
+    def load_gswoop_opts(self, cfg):
+        get = lambda x: cfg.get("gswoop", x)
+        cfg = GswoopConfig()
+        cfg.binary = get("binary")
+        return cfg
 
     @property
     def flysight_mountpoint(self):
@@ -63,15 +113,12 @@ class Configuration(object):
     def uploader(self):
         if not self._uploader:
             if self.storage_backend == 'dropbox':
-                self._uploader = DropboxUploader(self.dropbox_token)
+                self._uploader = DropboxUploader(self.dropbox_cfg.token, self.noop)
             else:
                 raise ConfigError('Unknown storage backend: %s' % self.storage_backend)
         return self._uploader
 
     def update_with_args(self, args):
-        if args.mountpoint:
-            log.debug("Setting mountpoint to %s from args" % self.mountpoint)
-            self.mountpoint = args.mountpoint
         if args.noop:
             log.debug("Setting noop flag")
             self.noop = args.noop

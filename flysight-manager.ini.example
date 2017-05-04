@@ -1,12 +1,20 @@
 [flysight-manager]
 
-# Mountpoint on OSX, uuid of the volume on Linux
-mountpoint=/mnt/flysight
-
 storage_backend=dropbox
-dropbox_token=TOKEN_GOES_HERE
 
-[gopro-manager]
+[dropbox]
+token=TOKEN_GOES_HERE
+
+[flysight]
 enabled = True
-# Mountpoint on OSX, uuid of the volume on Linux
+mountpoint = /mnt/flysight
+uuid = False
+
+[gopro]
+enabled = True
 mountpoint=/mnt/gopro
+uuid = False
+
+[gswoop]
+enabled = False
+binary = /Applications/gSwoop.app/Contents/MacOS/gswoop
