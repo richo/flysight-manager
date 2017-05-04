@@ -19,6 +19,8 @@ def get_argparser():
                         help='Run in daemon mode')
     parser.add_argument('--mountpoint', action='store', default=None,
                         help='Find flysight at MOUNTPOINT')
+    parser.add_argument('--noop', action='store_true',
+                        help='Don\'t upload or delete anything')
     return parser
 
 

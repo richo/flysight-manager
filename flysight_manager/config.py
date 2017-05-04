@@ -22,6 +22,7 @@ class Configuration(object):
         'mountpoint': None,
         'storage_backend': 'dropbox',
         'dropbox_token': None,
+        'noop': False,
     }
 
     CONFIG_FILE = 'flysight-manager.ini'
@@ -71,3 +72,6 @@ class Configuration(object):
         if args.mountpoint:
             log.debug("Setting mountpoint to %s from args" % self.mountpoint)
             self.mountpoint = args.mountpoint
+        if args.noop:
+            log.debug("Setting noop flag")
+            self.noop = args.noop
