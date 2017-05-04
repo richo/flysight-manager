@@ -58,7 +58,7 @@ class Configuration(object):
         """Validate the configuration"""
         get = lambda x: cfg.get(SECT, x)
         # TODO: Confirm how this handles bools
-        enabled = lambda x: cfg.get(x, "enabled")
+        enabled = lambda x: cfg.getboolean(x, "enabled")
 
         backend = get('storage_backend')
         if backend == 'dropbox':
