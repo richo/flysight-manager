@@ -7,6 +7,7 @@ else:
 import log
 
 from .uploader import DropboxUploader
+from .processors.gswoop import gSwoopProcessor
 
 SECT = 'flysight-manager'
 
@@ -34,11 +35,6 @@ class GswoopConfig(object):
 class Configuration(object):
     """Stub class to be replaced by a real configuration system"""
 
-    defaults = {
-        'storage_backend': 'dropbox',
-        'noop': False,
-    }
-
     CONFIG_FILE = 'flysight-manager.ini'
 
     def __init__(self):
@@ -46,13 +42,17 @@ class Configuration(object):
         self.gopro_enabled = False
         self.gswoop_enabled = False
 
+        self.processors = []
 
-        cfg = configparser.RawConfigParser(self.defaults)
+        cfg = configparser.RawConfigParser()
         log.info("Loading config from %s" % self.CONFIG_FILE)
         cfg.read((self.CONFIG_FILE),)
         self.load_config(cfg)
 
         self._uploader = None
+        if self.gswoop_enabled:
+            log.info("Enabling gswoop processor")
+            self.processors.append("gswoop")
 
     def load_config(self, cfg):
         """Validate the configuration"""
