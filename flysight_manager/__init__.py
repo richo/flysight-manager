@@ -81,7 +81,7 @@ def main():
             for date in flysight.dates():
                 log.info("Removing %s" % date)
                 if not cfg.noop:
-                    os.rmdir(os.path.join(cfg.flysight.mountpoint, date))
+                    os.rmdir(os.path.join(cfg.flysight_cfg.mountpoint, date))
 
             flysight.unmount()
         if not args.daemon:

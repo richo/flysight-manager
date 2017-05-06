@@ -41,6 +41,7 @@ class Configuration(object):
         self.flysight_enabled = False
         self.gopro_enabled = False
         self.gswoop_enabled = False
+        self.noop = False
 
         self.processors = []
 
