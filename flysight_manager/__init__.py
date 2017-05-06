@@ -44,12 +44,14 @@ def main():
         log.info("Setting up retry wrapper")
         wrapper = log.catch_exceptions_and_retry
 
+    poller_class = get_poller()
+    poller = poller_class(cfg.flysight_cfg.uuid)
+    already_seen = False
+
     while True:
         log.info("Watching for flysight at %s (%s)" % (cfg.flysight_cfg.mountpoint, cfg.flysight_cfg.uuid))
-        poller_class = get_poller()
-        poller = poller_class(cfg.flysight_cfg.uuid)
         if args.daemon:
-            poller.poll_for_attach()
+            poller.poll_for_attach(already_attached=already_seen)
         else:
             poller.raise_unless_attached()
         flysight = poller.mount(cfg.flysight_cfg.mountpoint)
@@ -86,6 +88,7 @@ def main():
             flysight.unmount()
         if not args.daemon:
             break
+        already_seen = True
     log.info("Done")
 
 

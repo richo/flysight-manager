@@ -15,7 +15,11 @@ class AbstractPoller(object):
     def __init__(self):
         self.interval = 10
 
-    def poll_for_attach(self):
+    def poll_for_attach(self, already_attached=False):
+        if already_attached:
+            while self._flysight_attached():
+                log.debug("Flysight still attached, waiting for disconnect")
+            log.debug("Flysight disconnected")
         while not self._flysight_attached():
             log.debug("%s does not exist, sleeping for %ds" %
                       (self.path, self.interval))
