@@ -19,6 +19,7 @@ class AbstractPoller(object):
         if already_attached:
             while self._flysight_attached():
                 log.debug("Flysight still attached, waiting for disconnect")
+                time.sleep(self.interval * 30)
             log.debug("Flysight disconnected")
         while not self._flysight_attached():
             log.debug("%s does not exist, sleeping for %ds" %
