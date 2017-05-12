@@ -22,7 +22,7 @@ class AbstractPoller(object):
             log.debug("Flysight disconnected")
         while not self._flysight_attached():
             log.debug("%s does not exist, sleeping for %ds" %
-                      (self.path, self.interval))
+                      (self._flysight_path(), self.interval))
             time.sleep(self.interval)
 
     def raise_unless_attached(self):
