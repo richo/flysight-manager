@@ -49,5 +49,5 @@ class Flysight(object):
         try:
             log.info("Trying to unmount %s" % self.path)
             subprocess.check_call(['sudo', 'umount', self.path])
-        except:
-            log.warn("Error unmounting flysight, continuing")
+        except Exception as e:
+            log.warn("Error unmounting flysight (%s), continuing" % (str(e)))
