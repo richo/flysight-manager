@@ -19,6 +19,7 @@ def fatal(msg):
     sys.exit(1)
 debug = make_logger("*", lambda: os.getenv("DEBUG"))
 info = make_logger("+")
+warn = make_logger("!")
 
 
 def catch_exceptions_and_retry(func):
