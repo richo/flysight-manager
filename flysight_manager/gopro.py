@@ -1,6 +1,7 @@
 import os
 import re
 import subprocess
+import time
 
 import log
 
@@ -32,12 +33,15 @@ class GoPro(object):
             st = os.stat(path)
 # We use gmtime because we've already done kooky offset math
             timeinfo = time.gmtime(st.st_mtime + self.offset)
-            date = '%d-%d-%d' % (timeinfo.tm_year % 100,
+            date = '%02d-%02d-%02d' % (timeinfo.tm_year % 100,
                                  timeinfo.tm_mon,
-                                 timeinfo.tm_day)
+                                 # Portability?
+                                 timeinfo.tm_mday)
+            # TODO maybe try to do something clever with time?
+            logical_path = os.path.join('/', date, 'video', os.path.basename(path))
             yield Video(
-                    video_path,
-                    os.ath.join('/', date, 'video', filename),
+                    path,
+                    logical_path
             )
 
     def unmount(self):

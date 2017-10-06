@@ -45,7 +45,7 @@ def main():
         wrapper = log.catch_exceptions_and_retry
 
     poller_class = get_poller()
-    poller = poller_class(cfg.flysight_cfg.uuid)
+    poller = poller_class(cfg.flysight_cfg.uuid, 'flysight')
     already_seen = False
 
     while True:

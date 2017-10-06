@@ -4,6 +4,7 @@ import time
 
 import log
 from .flysight import Flysight
+from .gopro import GoPro
 
 
 class NotMountedError(Exception):
@@ -12,52 +13,69 @@ class NotMountedError(Exception):
 
 
 class AbstractPoller(object):
-    def __init__(self):
+
+    device_paths = {
+            'flysight': 'config.txt',
+            'gopro': 'DCIM',
+            }
+
+    def __init__(self, ty):
         self.interval = 10
+        self.ty = ty
 
     def poll_for_attach(self, already_attached=False):
         if already_attached:
             while self._flysight_attached():
-                log.debug("Flysight still attached, waiting for disconnect")
+                log.debug("%s still attached, waiting for disconnect" % self.ty)
                 time.sleep(self.interval * 30)
-            log.debug("Flysight disconnected")
+            log.debug("%s disconnected" % self.ty)
         while not self._flysight_attached():
             log.debug("%s does not exist, sleeping for %ds" %
-                      (self._flysight_path(), self.interval))
+                      (self.device_path(), self.interval))
             time.sleep(self.interval)
 
     def raise_unless_attached(self):
-        if not self._flysight_attached():
-            raise NotMountedError("Flysight is not mounted")
+        path = self.device_paths[self.ty]
+
+        if not self.device_attached(path):
+            raise NotMountedError("%s is not mounted" % self.ty)
 
     def mount(self):
         raise NotImplementedError
 
+    def device_class(self):
+        return {
+            'flysight': Flysight,
+            'gopro': GoPro,
+        }[self.ty]
+
 
 class DirectoryPoller(AbstractPoller):
-    def __init__(self, path):
+    def __init__(self, path, ty):
         self.path = path
-        super(DirectoryPoller, self).__init__()
+        super(DirectoryPoller, self).__init__(ty)
 
-    def _flysight_attached(self):
-        return os.path.exists(os.path.join(self.path, 'config.txt'))
+    def device_attached(self, path):
+        print os.path.join(self.path, path)
+        return os.path.exists(os.path.join(self.path, path))
 
     def mount(self):
-        return Flysight(self.path)
+        return self.device_class()(self.path)
 
 
 class VolumePoller(AbstractPoller):
 # TODO Make this unmount on exit always
-    def __init__(self, uuid):
+    def __init__(self, uuid, ty):
         self.uuid = uuid
-        super(VolumePoller, self).__init__()
+        super(VolumePoller, self).__init__(ty)
 
-    def _flysight_path(self):
+    def device_path(self):
         return os.path.join('/', 'dev', 'disk', 'by-uuid', self.uuid)
-    def _flysight_attached(self):
-        return os.path.exists(self._flysight_path())
+
+    def device_attached(self, _):
+        return os.path.exists(self.device_path())
 
     def mount(self, path):
         subprocess.check_call(['sudo', 'mount', self._flysight_path(), path])
         log.info("Mounted %s on %s" % (self._flysight_path(), path))
-        return Flysight(path)
+        return self.device_class()(self.path)

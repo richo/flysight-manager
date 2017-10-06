@@ -45,7 +45,8 @@ def main():
         wrapper = log.catch_exceptions_and_retry
 
     poller_class = get_poller()
-    poller = poller_class(cfg.gopro_cfg.uuid)
+    # TODO this is so broken
+    poller = poller_class(cfg.gopro_cfg.mountpoint, 'gopro')
     already_seen = False
 
     while True:
@@ -54,7 +55,7 @@ def main():
             poller.poll_for_attach(already_attached=already_seen)
         else:
             poller.raise_unless_attached()
-        gopro = poller.mount(cfg.gopro_cfg.mountpoint)
+        gopro = poller.mount()
 
         queue = UploadQueue()
 
@@ -75,11 +76,7 @@ def main():
                 cfg.uploader.handle_queue(queue)
             network_operations()
 
-            log.info("Done uploading, cleaning directories")
-            for video in gopro.videos():
-                log.info("Removing %s" % video)
-                if not cfg.noop:
-                    os.unlink(video.fs_path)
+            log.info("Done uploading")
 
             gopro.unmount()
         if not args.daemon:
