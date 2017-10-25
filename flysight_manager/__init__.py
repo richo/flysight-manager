@@ -27,9 +27,9 @@ def get_argparser():
 def get_poller():
     platform = sys.platform
     if platform.startswith('linux'):
-        return VolumePoller
+        return lambda cfg: VolumePoller(cfg.flysight_cfg.uuid, 'flysight')
     elif platform == 'darwin':
-        return DirectoryPoller
+        return lambda cfg: DirectoryPoller(cfg.flysight_cfg.mountpoint, 'flysight')
     else:
         raise UnsupportedPlatformError('Unknown platform: %s' % platform)
 
@@ -45,7 +45,7 @@ def main():
         wrapper = log.catch_exceptions_and_retry
 
     poller_class = get_poller()
-    poller = poller_class(cfg.flysight_cfg.uuid, 'flysight')
+    poller = poller_class(cfg)
     already_seen = False
 
     while True:

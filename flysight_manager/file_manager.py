@@ -59,7 +59,7 @@ class DirectoryPoller(AbstractPoller):
         print os.path.join(self.path, path)
         return os.path.exists(os.path.join(self.path, path))
 
-    def mount(self):
+    def mount(self, _):
         return self.device_class()(self.path)
 
 
