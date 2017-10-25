@@ -14,6 +14,7 @@ Video = namedtuple('Video', ['fs_path',  # Path to find this flight on disk
 
 
 class GoPro(object):
+    # TODO They use other \d\d\dGOPRO directories
     VIDEO_PATH = "DCIM/100GOPRO"
 
     def __init__(self, path):
