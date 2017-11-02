@@ -6,8 +6,7 @@ import argparse
 import processors
 
 import log
-from .config import Configuration
-from .file_manager import DirectoryPoller, VolumePoller
+from .config import Configuration, get_poller
 from .upload_queue import UploadQueue, UploadQueueEntry
 
 
@@ -24,16 +23,6 @@ def get_argparser():
     return parser
 
 
-def get_poller():
-    platform = sys.platform
-    if platform.startswith('linux'):
-        return VolumePoller
-    elif platform == 'darwin':
-        return DirectoryPoller
-    else:
-        raise UnsupportedPlatformError('Unknown platform: %s' % platform)
-
-
 def main():
     args = get_argparser().parse_args()
     cfg = Configuration()
@@ -44,9 +33,8 @@ def main():
         log.info("Setting up retry wrapper")
         wrapper = log.catch_exceptions_and_retry
 
-    poller_class = get_poller()
-    # TODO this is so broken
-    poller = poller_class(cfg.gopro_cfg.mountpoint, 'gopro')
+    poller_class = get_poller('gopro')
+    poller = poller_class(cfg)
     already_seen = False
 
     while True:
@@ -55,7 +43,7 @@ def main():
             poller.poll_for_attach(already_attached=already_seen)
         else:
             poller.raise_unless_attached()
-        gopro = poller.mount()
+        gopro = poller.mount(cfg.gopro_cfg.mountpoint)
 
         queue = UploadQueue()
 

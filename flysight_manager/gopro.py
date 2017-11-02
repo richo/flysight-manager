@@ -28,7 +28,10 @@ class GoPro(object):
 
     def videos(self):
         video_path = os.path.join(self.path, self.VIDEO_PATH)
-        files = sorted(filter(lambda x: x.endswith(".MP4"), os.listdir(video_path)))
+        files = sorted(
+                filter(lambda x: not x.startswith("._"),
+                filter(lambda x: x.endswith(".MP4"), os.listdir(video_path))
+                ))
         for f in files:
             path = os.path.join(video_path, f)
             st = os.stat(path)

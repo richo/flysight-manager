@@ -8,6 +8,7 @@ import log
 
 from .uploader import DropboxUploader
 from .processors.gswoop import gSwoopProcessor
+from .file_manager import DirectoryPoller, VolumePoller
 
 SECT = 'flysight-manager'
 
@@ -30,6 +31,23 @@ class GoProConfig(object):
 
 class GswoopConfig(object):
     pass
+
+
+def get_poller(ty):
+    if ty == 'flysight':
+        get_sect = lambda cfg: cfg.flysight_cfg
+    elif ty == 'gopro':
+        get_sect = lambda cfg: cfg.gopro_cfg
+    else:
+        raise "Unknown ty: %s" % (repr(ty))
+
+    platform = sys.platform
+    if platform.startswith('linux'):
+        return lambda cfg: VolumePoller(get_sect(cfg).uuid, ty)
+    elif platform == 'darwin':
+        return lambda cfg: DirectoryPoller(get_sect(cfg).mountpoint, ty)
+    else:
+        raise 'Unknown platform: %s' % (repr(platform))
 
 
 class Configuration(object):
