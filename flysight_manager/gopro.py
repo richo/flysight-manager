@@ -15,7 +15,7 @@ Video = namedtuple('Video', ['fs_path',  # Path to find this flight on disk
 
 class GoPro(object):
     # TODO They use other \d\d\dGOPRO directories
-    VIDEO_PATH = "DCIM/100GOPRO"
+    VIDEO_PATH_REGEX = re.compile(r"\d\d\dGOPRO")
 
     def __init__(self, path):
         # TODO load this from config
@@ -26,14 +26,23 @@ class GoPro(object):
         assert os.path.exists("%s/DCIM" % self.path), \
             "Specified path isn't obviously a gopro"
 
+    def video_dirs(self):
+        dcim = os.path.join(self.path, "DCIM")
+        paths = filter(self.VIDEO_PATH_REGEX.match, os.listdir(dcim))
+        return map(lambda x: os.path.join(dcim, x), paths)
+
+    def video_files(self):
+        for d in self.video_dirs():
+            for f in os.listdir(d):
+                yield os.path.join(d, f)
+
     def videos(self):
-        video_path = os.path.join(self.path, self.VIDEO_PATH)
         files = sorted(
-                filter(lambda x: not x.startswith("._"),
-                filter(lambda x: x.endswith(".MP4"), os.listdir(video_path))
-                ))
-        for f in files:
-            path = os.path.join(video_path, f)
+                filter(lambda x: not os.path.basename(x).startswith("._"),
+                filter(lambda x: x.endswith(".MP4"),
+                self.video_files()
+                )))
+        for path in files:
             st = os.stat(path)
 # We use gmtime because we've already done kooky offset math
             timeinfo = time.gmtime(st.st_mtime + self.offset)
