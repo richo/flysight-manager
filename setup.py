@@ -12,6 +12,7 @@ VERSION = '0.0.0'
 
 requires = [
     'dropbox',
+    'toml',
 ]
 
 setup(

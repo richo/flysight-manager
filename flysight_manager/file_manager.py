@@ -23,7 +23,7 @@ class AbstractPoller(object):
         self.interval = 10
         self.ty = ty
 
-    def poll_for_attach(self, already_attached=False):
+    def poll_for_attach(self, already_attached=False, immediate_return=None):
         if already_attached:
             while self._flysight_attached():
                 log.debug("%s still attached, waiting for disconnect" % self.ty)
@@ -32,6 +32,9 @@ class AbstractPoller(object):
         while not self._flysight_attached():
             log.debug("%s does not exist, sleeping for %ds" %
                       (self.device_path(), self.interval))
+            if immediate_return:
+                log.debug("Shortcircuiting timeout")
+                return
             time.sleep(self.interval)
 
     def raise_unless_attached(self):
@@ -56,7 +59,6 @@ class DirectoryPoller(AbstractPoller):
         super(DirectoryPoller, self).__init__(ty)
 
     def device_attached(self, path):
-        print os.path.join(self.path, path)
         return os.path.exists(os.path.join(self.path, path))
 
     def mount(self, _):

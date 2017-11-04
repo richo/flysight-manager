@@ -18,15 +18,23 @@ def get_argparser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--daemon', action='store_true',
                         help='Run in daemon mode')
+    parser.add_argument('--camera', action='store',
+                        help='Camera to watch', default=False)
     parser.add_argument('--noop', action='store_true',
                         help='Don\'t upload or delete anything')
     return parser
 
+class Camera(object):
+    pass
+
+def get_attached_cameras(cameras):
+    return filter(lambda x: x.poller.device_attached("DCIM"), cameras.values())
 
 def main():
     args = get_argparser().parse_args()
     cfg = Configuration()
     cfg.update_with_args(args)
+    uploader = cfg.uploader
 
     wrapper = log.catch_exceptions
     if args.daemon:
@@ -34,21 +42,34 @@ def main():
         wrapper = log.catch_exceptions_and_retry
 
     poller_class = get_poller('gopro')
-    poller = poller_class(cfg)
+
+    cameras = {}
+    for name, cfg in cfg.gopro_cfg.cameras().items():
+        camera = Camera()
+        camera.name = name
+        camera.cfg = cfg
+        camera.poller = poller_class(cfg)
+        cameras[name] = camera
+
     already_seen = False
 
     while True:
-        log.info("Watching for gopro at %s (%s)" % (cfg.gopro_cfg.mountpoint, cfg.gopro_cfg.uuid))
+        mountpoints, uuids = zip(*map(lambda x: (x.cfg.mountpoint, x.cfg.uuid), cameras.values()))
+        log.info("Watching for gopros at %s (%s)" % (mountpoints, uuids))
+
+        attached_cameras = get_attached_cameras(cameras)
         if args.daemon:
             poller.poll_for_attach(already_attached=already_seen)
         else:
-            poller.raise_unless_attached()
-        gopro = poller.mount(cfg.gopro_cfg.mountpoint)
+            if len(attached_cameras) == 0:
+                raise RuntimeError("No cameras attached")
 
-        queue = UploadQueue()
+        for camera in attached_cameras:
+            gopro = camera.poller.mount(camera.cfg.mountpoint)
 
-        if cfg.gopro_enabled:
-            raw_queue = queue.get_directory("video")
+            queue = UploadQueue()
+
+            raw_queue = queue.get_directory(camera.name)
             for video in gopro.videos():
                 raw_queue.append(UploadQueueEntry(video.fs_path, video.upload_path))
 
@@ -61,15 +82,15 @@ def main():
                 this block may be invoked more than once, but
                 that's safe.
                 """
-                cfg.uploader.handle_queue(queue)
+                uploader.handle_queue(queue)
             network_operations()
 
             log.info("Done uploading")
 
             gopro.unmount()
-        if not args.daemon:
-            break
-        already_seen = True
+            if not args.daemon:
+                break
+            already_seen = True
     log.info("Done")
 
 

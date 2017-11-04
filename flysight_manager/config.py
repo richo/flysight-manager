@@ -1,8 +1,5 @@
 import sys
-if sys.version_info.major == 2:
-    import ConfigParser as configparser
-else:
-    import configparser
+import toml
 
 import log
 
@@ -24,9 +21,30 @@ class FlysightConfig(object):
 class DropboxConfig(object):
     pass
 
+class CameraConfig(object):
+    def __init__(self, name, cfg):
+        self._name = name
+        self._mountpoint = cfg["mountpoint"]
+        self._uuid = cfg["uuid"]
+
+    @property
+    def mountpoint(self):
+        return self._mountpoint
+
+    @property
+    def uuid(self):
+        return self._uuid
+
 
 class GoProConfig(object):
-    pass
+    def __init__(self):
+        self._cameras = {}
+
+    def add_camera(self, name, config):
+        self._cameras[name] = CameraConfig(name, config)
+
+    def cameras(self):
+        return self._cameras
 
 
 class GswoopConfig(object):
@@ -37,7 +55,7 @@ def get_poller(ty):
     if ty == 'flysight':
         get_sect = lambda cfg: cfg.flysight_cfg
     elif ty == 'gopro':
-        get_sect = lambda cfg: cfg.gopro_cfg
+        get_sect = lambda cfg: cfg
     else:
         raise "Unknown ty: %s" % (repr(ty))
 
@@ -63,9 +81,8 @@ class Configuration(object):
 
         self.processors = []
 
-        cfg = configparser.RawConfigParser()
         log.info("Loading config from %s" % self.CONFIG_FILE)
-        cfg.read((self.CONFIG_FILE),)
+        cfg = toml.load(open(self.CONFIG_FILE, 'rb'))
         self.load_config(cfg)
 
         self._uploader = None
@@ -75,9 +92,9 @@ class Configuration(object):
 
     def load_config(self, cfg):
         """Validate the configuration"""
-        get = lambda x: cfg.get(SECT, x)
+        get = lambda x: cfg[SECT][x]
         # TODO: Confirm how this handles bools
-        enabled = lambda x: cfg.getboolean(x, "enabled")
+        enabled = lambda x: cfg[x]["enabled"]
 
         backend = get('storage_backend')
         if backend == 'dropbox':
@@ -99,27 +116,28 @@ class Configuration(object):
             self.gswoop_cfg = self.load_gswoop_opts(cfg)
 
     def load_dropbox_opts(self, cfg):
-        get = lambda x: cfg.get("dropbox", x)
+        get = lambda x: cfg["dropbox"][x]
         _cfg = DropboxConfig()
         _cfg.token = get("token")
         return _cfg
 
     def load_gopro_opts(self, cfg):
-        get = lambda x: cfg.get("gopro", x)
         _cfg = GoProConfig()
-        _cfg.mountpoint = get("mountpoint")
-        _cfg.uuid = get("uuid")
+# Extract the enabled key, then pray that anything else is a camera
+        for k, v in cfg["gopro"].items():
+            if isinstance(v, dict):
+                _cfg.add_camera(k, v)
         return _cfg
 
     def load_flysight_opts(self, cfg):
-        get = lambda x: cfg.get("flysight", x)
+        get = lambda x: cfg["flysight"][x]
         _cfg = FlysightConfig()
         _cfg.mountpoint = get("mountpoint")
         _cfg.uuid = get("uuid")
         return _cfg
 
     def load_gswoop_opts(self, cfg):
-        get = lambda x: cfg.get("gswoop", x)
+        get = lambda x: cfg["gswoop"][x]
         _cfg = GswoopConfig()
         _cfg.binary = get("binary")
         return _cfg

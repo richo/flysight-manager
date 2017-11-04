@@ -1,20 +1,22 @@
 [flysight-manager]
 
-storage_backend=dropbox
+storage_backend="dropbox"
 
 [dropbox]
-token=TOKEN_GOES_HERE
+token="TOKEN_GOES_HERE"
 
 [flysight]
-enabled = True
-mountpoint = /mnt/flysight
-uuid = False
+enabled = "true"
+mountpoint = "/mnt/flysight"
+uuid = "false"
 
 [gopro]
-enabled = True
-mountpoint=/mnt/gopro
-uuid = False
+enabled = "true"
+
+[gopro.video]
+mountpoint="/mnt/gopro"
+uuid = "false"
 
 [gswoop]
-enabled = False
-binary = /Applications/gSwoop.app/Contents/MacOS/gswoop
+enabled = "false"
+binary = "/Applications/gSwoop.app/Contents/MacOS/gswoop"
