@@ -48,7 +48,7 @@ def main():
         camera = Camera()
         camera.name = name
         camera.cfg = cfg
-        camera.poller = poller_class(cfg)
+        camera.poller = poller_class(name, cfg)
         cameras[name] = camera
 
     already_seen = False

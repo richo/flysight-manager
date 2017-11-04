@@ -61,9 +61,9 @@ def get_poller(ty):
 
     platform = sys.platform
     if platform.startswith('linux'):
-        return lambda cfg: VolumePoller(get_sect(cfg).uuid, ty)
+        return lambda name, cfg: VolumePoller(name, get_sect(cfg).uuid, ty)
     elif platform == 'darwin':
-        return lambda cfg: DirectoryPoller(get_sect(cfg).mountpoint, ty)
+        return lambda name, cfg: DirectoryPoller(name, get_sect(cfg).mountpoint, ty)
     else:
         raise 'Unknown platform: %s' % (repr(platform))
 

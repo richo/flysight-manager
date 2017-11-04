@@ -19,9 +19,10 @@ class AbstractPoller(object):
             'gopro': 'DCIM',
             }
 
-    def __init__(self, ty):
+    def __init__(self, name, ty):
         self.interval = 10
         self.ty = ty
+        self.name = name
 
     def poll_for_attach(self, already_attached=False, immediate_return=None):
         if already_attached:
@@ -54,22 +55,22 @@ class AbstractPoller(object):
 
 
 class DirectoryPoller(AbstractPoller):
-    def __init__(self, path, ty):
+    def __init__(self, name, path, ty):
         self.path = path
-        super(DirectoryPoller, self).__init__(ty)
+        super(DirectoryPoller, self).__init__(name, ty)
 
     def device_attached(self, path):
         return os.path.exists(os.path.join(self.path, path))
 
     def mount(self, _):
-        return self.device_class()(self.path)
+        return self.device_class()(self.name, self.path)
 
 
 class VolumePoller(AbstractPoller):
 # TODO Make this unmount on exit always
-    def __init__(self, uuid, ty):
+    def __init__(self, name, uuid, ty):
         self.uuid = uuid
-        super(VolumePoller, self).__init__(ty)
+        super(VolumePoller, self).__init__(name, ty)
 
     def device_path(self):
         return os.path.join('/', 'dev', 'disk', 'by-uuid', self.uuid)
@@ -80,4 +81,4 @@ class VolumePoller(AbstractPoller):
     def mount(self, path):
         subprocess.check_call(['sudo', 'mount', self._flysight_path(), path])
         log.info("Mounted %s on %s" % (self._flysight_path(), path))
-        return self.device_class()(self.path)
+        return self.device_class()(self.name, self.path)

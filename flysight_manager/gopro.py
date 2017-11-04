@@ -17,10 +17,11 @@ class GoPro(object):
     # TODO They use other \d\d\dGOPRO directories
     VIDEO_PATH_REGEX = re.compile(r"\d\d\dGOPRO")
 
-    def __init__(self, path):
+    def __init__(self, name, path):
         # TODO load this from config
 # This is good enough for now, although it's an hour off with DST
         self.offset = -28800
+        self.name = name
         self.path = path
         # Assert that we're really a flysight
         assert os.path.exists("%s/DCIM" % self.path), \
@@ -51,7 +52,7 @@ class GoPro(object):
                                  # Portability?
                                  timeinfo.tm_mday)
             # TODO maybe try to do something clever with time?
-            logical_path = os.path.join('/', date, 'video', os.path.basename(path))
+            logical_path = os.path.join('/', date, self.name, os.path.basename(path))
             yield Video(
                     path,
                     logical_path
