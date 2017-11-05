@@ -88,9 +88,9 @@ def main():
             log.info("Done uploading")
 
             gopro.unmount()
-            if not args.daemon:
-                break
-            already_seen = True
+        if not args.daemon:
+            break
+        already_seen = True
     log.info("Done")
 
 
