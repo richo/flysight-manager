@@ -14,9 +14,10 @@ class Uploader(object):
 
 
 class DropboxUploader(Uploader):
-    def __init__(self, token, noop):
+    def __init__(self, token, noop, preserve):
         self.token = token
         self.noop = noop
+        self.preserve = preserve
         self.dropbox = Dropbox(self.token)
         self.mode = WriteMode('overwrite')
         super(DropboxUploader, self).__init__()
@@ -34,9 +35,14 @@ class DropboxUploader(Uploader):
                         self.upload_large_file(entry.physical_path, logical_path)
                     else:
                         self.upload_small_file(entry.physical_path, logical_path)
-                log.info("Removing %s" % entry.physical_path)
-                if not self.noop:
+                if self.noop:
+                    log.info("Not removing %s, noop specified" % (entry.physical_path))
+                elif self.preserve:
+                    log.info("Not removing %s, preserve specified" % (entry.physical_path))
+                else:
+                    log.info("Removing %s" % entry.physical_path)
                     os.unlink(entry.physical_path)
+
 
     def upload_small_file(self, fs_path, logical_path):
         return self.dropbox.files_upload(

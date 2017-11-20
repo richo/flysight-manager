@@ -22,6 +22,8 @@ def get_argparser():
                         help='Camera to watch', default=False)
     parser.add_argument('--noop', action='store_true',
                         help='Don\'t upload or delete anything')
+    parser.add_argument('--preserve', action='store_true',
+                        help='Don\'t remove uploaded files')
     return parser
 
 class Camera(object):

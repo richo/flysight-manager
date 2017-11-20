@@ -78,6 +78,7 @@ class Configuration(object):
         self.gopro_enabled = False
         self.gswoop_enabled = False
         self.noop = False
+        self.preserve = False
 
         self.processors = []
 
@@ -146,7 +147,7 @@ class Configuration(object):
     def uploader(self):
         if not self._uploader:
             if self.storage_backend == 'dropbox':
-                self._uploader = DropboxUploader(self.dropbox_cfg.token, self.noop)
+                self._uploader = DropboxUploader(self.dropbox_cfg.token, self.noop, self.preserve)
             else:
                 raise ConfigError('Unknown storage backend: %s' % self.storage_backend)
         return self._uploader
@@ -155,3 +156,6 @@ class Configuration(object):
         if args.noop:
             log.debug("Setting noop flag")
             self.noop = args.noop
+        if args.preserve:
+            log.debug("Setting preserve flag")
+            self.preserve = args.preserve
