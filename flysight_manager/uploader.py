@@ -1,4 +1,5 @@
 import os
+import sys
 from dropbox import Dropbox
 
 import dropbox.files
@@ -53,6 +54,13 @@ class DropboxUploader(Uploader):
 
     def upload_large_file(self, fs_path, logical_path):
         size = os.stat(fs_path).st_size
+
+        def write_status_line(msg):
+            sys.stdout.write("\33[2K\r")
+            sys.stdout.flush()
+            sys.stdout.write(msg)
+            sys.stdout.flush()
+
         with open(fs_path, 'rb') as fh:
             log.info("[dropbox] Starting large upload of %x bytes" % (size))
             upload_session_start_result = self.dropbox.files_upload_session_start(fh.read(CHUNK_SIZE))
@@ -62,10 +70,15 @@ class DropboxUploader(Uploader):
 
             while fh.tell() < size:
                 if ((size - fh.tell()) <= CHUNK_SIZE):
+                    if sys.stdout.isatty():
+                        write_status_line("Uploading last chunk\n")
                     print self.dropbox.files_upload_session_finish(fh.read(CHUNK_SIZE),
                                                     cursor,
                                                     commit)
                 else:
+                    if sys.stdout.isatty():
+                        progress = int((float(cursor.offset) / float(size)) * 100)
+                        write_status_line("Uploading %d bytes from 0x%x (%d%%)" % (CHUNK_SIZE, cursor.offset, progress))
                     self.dropbox.files_upload_session_append(fh.read(CHUNK_SIZE),
                                                     cursor.session_id,
                                                     cursor.offset)
