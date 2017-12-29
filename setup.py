@@ -7,6 +7,7 @@ Package information for flysight-manager package.
 """
 
 from setuptools import setup
+import unittest
 
 VERSION = '0.0.0'
 
@@ -14,6 +15,11 @@ requires = [
     'dropbox',
     'toml',
 ]
+
+def test_suite():
+    test_loader = unittest.TestLoader()
+    test_suite = test_loader.discover('tests', pattern='test_*.py')
+    return test_suite
 
 setup(
         name='flysight_manager',
@@ -33,4 +39,5 @@ setup(
                 ],
             },
         install_requires=requires,
+        test_suite='setup.test_suite',
         )

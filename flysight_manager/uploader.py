@@ -10,6 +10,17 @@ import log
 CHUNK_SIZE = 4 * 1024 * 1024
 
 
+def human_readable_size(size):
+    multiplier = 1
+    if size < 1024:
+        return "%d" % size
+    for unit in ('k', 'm', 'g', 't'):
+        multiplier *= 1024
+        if size < 1024 * multiplier:
+            return "%d%s" % (float(size) / multiplier, unit)
+    return "%dt" % (float(size) / multiplier)
+
+
 class Uploader(object):
     pass
 
@@ -58,11 +69,12 @@ class DropboxUploader(Uploader):
         def write_status_line(msg):
             sys.stdout.write("\33[2K\r")
             sys.stdout.flush()
+            sys.stdout.write("[-] ")
             sys.stdout.write(msg)
             sys.stdout.flush()
 
         with open(fs_path, 'rb') as fh:
-            log.info("[dropbox] Starting large upload of %x bytes" % (size))
+            log.info("[dropbox] Starting large upload of %s bytes" % (human_readable_size(size)))
             upload_session_start_result = self.dropbox.files_upload_session_start(fh.read(CHUNK_SIZE))
             cursor = dropbox.files.UploadSessionCursor(session_id=upload_session_start_result.session_id,
                                                        offset=fh.tell())
@@ -78,7 +90,7 @@ class DropboxUploader(Uploader):
                 else:
                     if sys.stdout.isatty():
                         progress = int((float(cursor.offset) / float(size)) * 100)
-                        write_status_line("Uploading %d bytes from 0x%x (%d%%)" % (CHUNK_SIZE, cursor.offset, progress))
+                        write_status_line("Uploading %s bytes from %s (%d%%)" % (human_readable_size(CHUNK_SIZE), human_readable_size(cursor.offset), progress))
                     self.dropbox.files_upload_session_append(fh.read(CHUNK_SIZE),
                                                     cursor.session_id,
                                                     cursor.offset)

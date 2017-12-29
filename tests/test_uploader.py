@@ -1,0 +1,13 @@
+import unittest
+from flysight_manager import uploader
+
+class TestUploaderSizeFormatter(unittest.TestCase):
+    def test_suffix(self):
+        hrs = uploader.human_readable_size
+
+        self.assertEqual(hrs(1000), '1000')
+        self.assertEqual(hrs(1024), '1k')
+        self.assertEqual(hrs(1024 * 100 + 100), '100k')
+        self.assertEqual(hrs(5), '5')
+        self.assertEqual(hrs(2000), '1k')
+        self.assertEqual(hrs(1024 * 1024 * 1024 * 1024 * 1024), '1024t')
