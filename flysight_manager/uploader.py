@@ -66,10 +66,18 @@ class DropboxUploader(Uploader):
     def upload_large_file(self, fs_path, logical_path):
         size = os.stat(fs_path).st_size
 
+        def _next_char():
+            while True:
+                for i in '-\\|/':
+                    yield i
+        next_char_iter = _next_char()
+        next_char = lambda: next_char_iter.next()
+
+
         def write_status_line(msg):
             sys.stdout.write("\33[2K\r")
             sys.stdout.flush()
-            sys.stdout.write("[-] ")
+            sys.stdout.write("[%s] " % (next_char()))
             sys.stdout.write(msg)
             sys.stdout.flush()
 
