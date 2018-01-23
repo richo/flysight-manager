@@ -24,7 +24,7 @@ def status_line():
         sys.stdout.write(msg)
         sys.stdout.flush()
     yield write_status_line
-    sys.stdout.write("\n")
+    sys.stdout.write("\33[2K\r")
     sys.stdout.flush()
 
 def human_readable_size(size):
