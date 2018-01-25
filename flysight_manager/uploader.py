@@ -1,6 +1,7 @@
 import os
 import sys
 import contextlib
+import time
 from dropbox import Dropbox
 
 import dropbox.files
@@ -8,7 +9,8 @@ from dropbox.files import WriteMode
 
 import log
 
-CHUNK_SIZE = 4 * 1024 * 1024
+CHUNK_SIZE = 1024 * 1024
+STATUS_WIDTH = 20
 
 @contextlib.contextmanager
 def status_line():
@@ -36,6 +38,10 @@ def human_readable_size(size):
         if size < 1024 * multiplier:
             return "%d%s" % (float(size) / multiplier, unit)
     return "%dt" % (float(size) / multiplier)
+
+def upload_speed(byts, dt):
+    return human_readable_size(float(byts) / dt)
+
 
 
 class Uploader(object):
@@ -82,10 +88,12 @@ class DropboxUploader(Uploader):
 
     def upload_large_file(self, fs_path, logical_path):
         size = os.stat(fs_path).st_size
+        last = None
 
         with open(fs_path, 'rb') as fh:
             log.info("[dropbox] Starting large upload of %s bytes" % (human_readable_size(size)))
-            upload_session_start_result = self.dropbox.files_upload_session_start(fh.read(CHUNK_SIZE))
+# Only upload a few bytes to start
+            upload_session_start_result = self.dropbox.files_upload_session_start(fh.read(64))
             cursor = dropbox.files.UploadSessionCursor(session_id=upload_session_start_result.session_id,
                                                        offset=fh.tell())
             commit = dropbox.files.CommitInfo(path=logical_path)
@@ -100,10 +108,23 @@ class DropboxUploader(Uploader):
                                                         commit)
                     else:
                         if sys.stdout.isatty():
-                            progress = int((float(cursor.offset) / float(size)) * 100)
-                            write_status_line("Uploading %s bytes from %s (%d%%)" % (human_readable_size(CHUNK_SIZE), human_readable_size(cursor.offset), progress))
+                            now = time.time()
+                            progress = (float(cursor.offset) / float(size))
+                            marked = int(progress * STATUS_WIDTH)
+                            progress = int(progress * 100)
+
+                            msg = "|%s%s| %02d%%" % (
+                                    "-" * (marked),
+                                    " " * (STATUS_WIDTH - marked),
+                                    progress
+                            )
+                            if last:
+                                msg += " (%s/s)" % upload_speed(CHUNK_SIZE, now - last)
+
+                            write_status_line(msg)
+
+                        last = time.time()
                         self.dropbox.files_upload_session_append(fh.read(CHUNK_SIZE),
                                                         cursor.session_id,
                                                         cursor.offset)
                         cursor.offset = fh.tell()
-                        # log.info("[dropbox] Uploaded to byte %x" % (fh.tell()))
