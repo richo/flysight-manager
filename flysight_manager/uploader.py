@@ -68,10 +68,7 @@ class DropboxUploader(Uploader):
                     entry.physical_path, logical_path))
                 if not self.noop:
                     size = os.stat(entry.physical_path).st_size
-                    if size > CHUNK_SIZE:
-                        self.upload_large_file(entry.physical_path, logical_path)
-                    else:
-                        self.upload_small_file(entry.physical_path, logical_path)
+                    self.upload_large_file(entry.physical_path, logical_path)
                 if self.noop:
                     log.info("Not removing %s, noop specified" % (entry.physical_path))
                 elif self.preserve:
@@ -81,52 +78,45 @@ class DropboxUploader(Uploader):
                     os.unlink(entry.physical_path)
 
 
-    def upload_small_file(self, fs_path, logical_path):
-        return self.dropbox.files_upload(
-                open(fs_path, 'rb'),
-                logical_path,
-                mode=self.mode
-                )
-
     def upload_large_file(self, fs_path, logical_path):
         size = os.stat(fs_path).st_size
-        last = None
 
-        with open(fs_path, 'rb') as fh:
-            log.info("[dropbox] Starting large upload of %s bytes" % (human_readable_size(size)))
+        log.info("[dropbox] Uploading %s bytes from %s" % ((human_readable_size(size)), fs_path))
+        with open(fs_path, 'rb') as fh, status_line() as write_status_line:
+            last = None
+            start = time.time()
 # Only upload a few bytes to start
             upload_session_start_result = self.dropbox.files_upload_session_start(fh.read(64))
             cursor = dropbox.files.UploadSessionCursor(session_id=upload_session_start_result.session_id,
                                                        offset=fh.tell())
             commit = dropbox.files.CommitInfo(path=logical_path)
 
-            with status_line() as write_status_line:
-                while fh.tell() < size:
-                    if ((size - fh.tell()) <= CHUNK_SIZE):
-                        if sys.stdout.isatty():
-                            write_status_line("Uploading last chunk\n")
-                        print self.dropbox.files_upload_session_finish(fh.read(CHUNK_SIZE),
-                                                        cursor,
-                                                        commit)
-                    else:
-                        if sys.stdout.isatty():
-                            now = time.time()
-                            progress = (float(cursor.offset) / float(size))
-                            marked = int(progress * STATUS_WIDTH)
-                            progress = int(progress * 100)
+            while fh.tell() < size:
+                if ((size - fh.tell()) <= CHUNK_SIZE):
+                    if sys.stdout.isatty():
+                        write_status_line("Uploading last chunk (%s/s)\n" % upload_speed(size, time.time() - start))
+                    print self.dropbox.files_upload_session_finish(fh.read(CHUNK_SIZE),
+                                                    cursor,
+                                                    commit)
+                else:
+                    if sys.stdout.isatty():
+                        now = time.time()
+                        progress = (float(cursor.offset) / float(size))
+                        marked = int(progress * STATUS_WIDTH)
+                        progress = int(progress * 100)
 
-                            msg = "|%s%s| %02d%%" % (
-                                    "-" * (marked),
-                                    " " * (STATUS_WIDTH - marked),
-                                    progress
-                            )
-                            if last:
-                                msg += " (%s/s)" % upload_speed(CHUNK_SIZE, now - last)
+                        msg = "|%s%s| %02d%%" % (
+                                "-" * (marked),
+                                " " * (STATUS_WIDTH - marked),
+                                progress
+                        )
+                        if last:
+                            msg += " (%s/s)" % upload_speed(CHUNK_SIZE, now - last)
 
-                            write_status_line(msg)
+                        write_status_line(msg)
 
-                        last = time.time()
-                        self.dropbox.files_upload_session_append(fh.read(CHUNK_SIZE),
-                                                        cursor.session_id,
-                                                        cursor.offset)
-                        cursor.offset = fh.tell()
+                    last = time.time()
+                    self.dropbox.files_upload_session_append(fh.read(CHUNK_SIZE),
+                                                    cursor.session_id,
+                                                    cursor.offset)
+                    cursor.offset = fh.tell()
