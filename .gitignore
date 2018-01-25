@@ -1,2 +1,7 @@
 flysight-manager.ini
 *.pyc
+build/
+dist/
+env/
+.eggs/
+flysight_manager.egg-info/
