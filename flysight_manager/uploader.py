@@ -35,6 +35,8 @@ def human_readable_size(size):
         return "%d" % size
     for unit in ('k', 'm', 'g', 't'):
         multiplier *= 1024
+        if unit != 'k' and size < multiplier * 10:
+            return "%.2f%s" % (float(size) / multiplier, unit)
         if size < 1024 * multiplier:
             return "%d%s" % (float(size) / multiplier, unit)
     return "%dt" % (float(size) / multiplier)

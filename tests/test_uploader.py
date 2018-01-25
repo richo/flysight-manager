@@ -7,6 +7,9 @@ class TestUploaderSizeFormatter(unittest.TestCase):
 
         self.assertEqual(hrs(1000), '1000')
         self.assertEqual(hrs(1024), '1k')
+        self.assertEqual(hrs(1024 * 1024), '1.00m')
+        self.assertEqual(hrs(1044 * 1024), '1.02m')
+        self.assertEqual(hrs(5.5 * 1024 * 1024), '5.50m')
         self.assertEqual(hrs(1024 * 100 + 100), '100k')
         self.assertEqual(hrs(5), '5')
         self.assertEqual(hrs(2000), '1k')
