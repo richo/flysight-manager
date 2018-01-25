@@ -16,7 +16,8 @@ Flight = namedtuple('Flight', ['fs_path',  # Path to find this flight on disk
 class Flysight(object):
     DATE_RE = re.compile('(?P<year>\d{2})-(?P<month>\d{2})-(?P<day>\d{2})')
 
-    def __init__(self, path):
+    def __init__(self, name, path):
+        self.name = name
         self.path = path
         # Assert that we're really a flysight
         assert os.path.exists("%s/config.txt" % self.path), \

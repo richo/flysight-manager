@@ -20,6 +20,8 @@ def get_argparser():
                         help='Run in daemon mode')
     parser.add_argument('--noop', action='store_true',
                         help='Don\'t upload or delete anything')
+    parser.add_argument('--preserve', action='store_true',
+                        help='Don\'t remove uploaded files')
     return parser
 
 
@@ -34,7 +36,7 @@ def main():
         wrapper = log.catch_exceptions_and_retry
 
     poller_class = get_poller('flysight')
-    poller = poller_class(cfg)
+    poller = poller_class('flysight', cfg)
     already_seen = False
 
     while True:
