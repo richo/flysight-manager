@@ -10,7 +10,7 @@ from dropbox.files import WriteMode
 import log
 
 CHUNK_SIZE = 4 * 1024 * 1024
-STATUS_WIDTH = 20
+STATUS_WIDTH = 60
 
 @contextlib.contextmanager
 def status_line():
