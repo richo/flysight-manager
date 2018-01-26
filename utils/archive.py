@@ -25,8 +25,8 @@ def get_root_contents(db):
             break
         res = db.files_list_folder_continue(res.cursor)
 
-def get_files(db, folder):
-    res = db.files_list_folder(folder, recursive=True)
+def get_files(db, folder, recursive):
+    res = db.files_list_folder(folder, recursive=recursive)
     while True:
         for f in res.entries:
             yield f
@@ -34,6 +34,29 @@ def get_files(db, folder):
             break
         res = db.files_list_folder_continue(res.cursor)
 
+def recursively_delete_if_empty(db, path):
+    """Attempts to delete `path` if empty, first recursively deleting any empty
+    directories under `path`
+
+    Attempts to delete non-empty directories can, but are not guaranteed to
+    delete empty directories under them before failing.
+
+    @return bool True if directory is empty and was deleted, False otherwise
+    """
+    for md in get_files(db, path, recursive=False):
+        if isinstance(md, FileMetadata):
+# This is a file, we're not empty
+            log.info("Found a file at %s, bailing" % md.path_lower)
+            return False
+        elif isinstance(md, FolderMetadata):
+            log.info("Attempting to clean out %s" % md.path_lower)
+            if not recursively_delete_if_empty(db, md.path_lower):
+                return False
+        else:
+            raise("What even is a %s" % repr(md))
+    log.warn("%s is empty, deleting" % path)
+    db.files_delete(path)
+    return True
 
 def main():
     cfg = Configuration()
@@ -52,8 +75,9 @@ def main():
     db = cfg.uploader.dropbox
 
     matches = filter(lambda f: year_re.match(f.name), get_root_contents(db))
-    for md in chain.from_iterable(imap(lambda m: get_files(db, m.path_lower), matches)):
+    for md in chain.from_iterable(imap(lambda m: get_files(db, m.path_lower, recursive=True), matches)):
         if isinstance(md, FileMetadata):
+            log.info("enqueuing %s to be archived" % md.path_lower)
             batch.append(RelocationPath(md.path_lower, "/%s%s" % (output_year, md.path_lower)))
         elif isinstance(md, FolderMetadata):
             pass
@@ -76,6 +100,11 @@ def main():
         log.info("Migration complete!")
     else:
         log.info("Migration failed :(")
+        return
+
+    for md in matches:
+        log.info("Attempting to remove %s" % md.path_lower)
+        recursively_delete_if_empty(db, md.path_lower)
 
 if __name__ == '__main__':
     main()
