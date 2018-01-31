@@ -41,6 +41,14 @@ def human_readable_size(size):
             return "%d%s" % (float(size) / multiplier, unit)
     return "%dt" % (float(size) / multiplier)
 
+def human_readable_time(seconds):
+    out = ""
+    if seconds > 60:
+        mins, seconds = divmod(seconds, 60)
+        out += "%dm" % mins
+    out += "%ds" % seconds
+    return out
+
 def upload_speed(byts, dt):
     return human_readable_size(float(byts) / dt)
 
@@ -64,17 +72,17 @@ class DropboxUploader(Uploader):
             log.info("[dropbox] processing %s" % repr(name))
             for entry in directory:
                 logical_path = os.path.join(name, entry.logical_path)
-                log.info("[dropbox] Uploading %s to %s" % (
+                log.debug("[dropbox] Uploading %s to %s" % (
                     entry.physical_path, logical_path))
                 if not self.noop:
                     size = os.stat(entry.physical_path).st_size
                     self.upload_large_file(entry.physical_path, logical_path)
                 if self.noop:
-                    log.info("Not removing %s, noop specified" % (entry.physical_path))
+                    log.info("  Not removing %s, noop specified" % (entry.physical_path))
                 elif self.preserve:
-                    log.info("Not removing %s, preserve specified" % (entry.physical_path))
+                    log.info("  Not removing %s, preserve specified" % (entry.physical_path))
                 else:
-                    log.info("Removing %s" % entry.physical_path)
+                    log.info("  Removing %s" % entry.physical_path)
                     os.unlink(entry.physical_path)
 
 
@@ -95,9 +103,13 @@ class DropboxUploader(Uploader):
                 if ((size - fh.tell()) <= CHUNK_SIZE):
                     if sys.stdout.isatty():
                         write_status_line("Uploading last chunk (%s/s)\n" % upload_speed(size, time.time() - start))
-                    print self.dropbox.files_upload_session_finish(fh.read(CHUNK_SIZE),
+                    res = self.dropbox.files_upload_session_finish(fh.read(CHUNK_SIZE),
                                                     cursor,
                                                     commit)
+                    log.info("Uploaded {p.name} to {p.path_lower} in {t}"
+                                .format(
+                                    p = res,
+                                    t = human_readable_time(int(time.time() - start))))
                 else:
                     if sys.stdout.isatty():
                         now = time.time()
