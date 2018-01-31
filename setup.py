@@ -36,6 +36,7 @@ setup(
         entry_points={
             'console_scripts': [
                 'flysight-manager = flysight_manager:main',
+                'gopro-manager = flysight_manager.gopro_manager:main',
                 ],
             },
         install_requires=requires,
