@@ -52,6 +52,18 @@ def human_readable_time(seconds):
     out += "%ds" % seconds
     return out
 
+def time_left(size, uploaded, start_time, now):
+    dt = float(now) - float(start_time)
+    if dt < 1:
+# Unlikely to have useful data extrapolating from less than a second
+        return "unknown"
+    ds = float(uploaded)
+
+    speed = dt / ds
+    remainder = (size - ds) * speed
+    return human_readable_time(remainder)
+
+
 def upload_speed(byts, dt):
     return human_readable_size(float(byts) / dt)
 
@@ -118,10 +130,11 @@ class DropboxUploader(Uploader):
                         marked = int(progress * STATUS_WIDTH)
                         progress = int(progress * 100)
 
-                        msg = "|%s%s| %02d%%" % (
+                        msg = "|%s%s| %02d%% ETA: %s" % (
                                 "-" * (marked),
                                 " " * (STATUS_WIDTH - marked),
-                                progress
+                                progress,
+                                time_left(size, cursor.offset, start, now)
                         )
                         if last:
                             msg += " (%s/s)" % upload_speed(CHUNK_SIZE, now - last)
