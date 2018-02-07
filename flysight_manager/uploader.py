@@ -45,14 +45,15 @@ def human_readable_time(seconds):
     out = ""
     if seconds > 60:
         mins, seconds = divmod(seconds, 60)
+        if mins > 60:
+            hours, mins = divmod(mins, 60)
+            out += "%dh" % hours
         out += "%dm" % mins
     out += "%ds" % seconds
     return out
 
 def upload_speed(byts, dt):
     return human_readable_size(float(byts) / dt)
-
-
 
 class Uploader(object):
     pass
