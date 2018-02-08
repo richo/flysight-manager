@@ -2,6 +2,8 @@ import os
 import sys
 import contextlib
 import time
+import threading
+import Queue
 from dropbox import Dropbox
 
 import dropbox.files
@@ -11,6 +13,27 @@ import log
 
 CHUNK_SIZE = 4 * 1024 * 1024
 STATUS_WIDTH = 60
+
+class StatusPrinter(threading.Thread):
+    def __init__(self, start_time, write_line):
+        self.queue = Queue.Queue()
+        self.start_time = start_time
+        self.write_line = write_line
+
+        super(StatusPrinter, self).__init__()
+
+    def run(self):
+        while True:
+            try:
+                item = self.queue.get(block=True, timeout=1)
+                if item is None:
+                    break
+
+            except Queue.Empty:
+# Update ETA, write line
+                pass
+        log.debug("StatusWriter is terminating")
+
 
 @contextlib.contextmanager
 def status_line():
@@ -106,6 +129,7 @@ class DropboxUploader(Uploader):
         with open(fs_path, 'rb') as fh, status_line() as write_status_line:
             last = None
             start = time.time()
+            printer = StatusPrinter(start_time, write_status_line)
 # Only upload a few bytes to start
             upload_session_start_result = self.dropbox.files_upload_session_start(fh.read(64))
             cursor = dropbox.files.UploadSessionCursor(session_id=upload_session_start_result.session_id,
