@@ -15,9 +15,10 @@ CHUNK_SIZE = 4 * 1024 * 1024
 STATUS_WIDTH = 60
 
 class StatusPrinter(threading.Thread):
-    def __init__(self, start_time, write_line):
+    def __init__(self, start_time, size, write_line):
         self.queue = Queue.Queue()
         self.start_time = start_time
+        self.size = size
         self.write_line = write_line
 
         super(StatusPrinter, self).__init__()
@@ -27,7 +28,25 @@ class StatusPrinter(threading.Thread):
             try:
                 item = self.queue.get(block=True, timeout=1)
                 if item is None:
+# Let this thread die, upload is complete
                     break
+
+                (now, offset) = item
+
+                progress = (float(offset) / float(self.size))
+                marked = int(progress * STATUS_WIDTH)
+                progress = int(progress * 100)
+
+                msg = "|%s%s| %02d%% ETA: %s" % (
+                        "-" * (marked),
+                        " " * (STATUS_WIDTH - marked),
+                        progress,
+                        time_left(size, offset, self.start_time, now)
+                )
+                if last:
+                    msg += " (%s/s)" % upload_speed(CHUNK_SIZE, now - last)
+
+                write_status_line(msg)
 
             except Queue.Empty:
 # Update ETA, write line
@@ -129,7 +148,8 @@ class DropboxUploader(Uploader):
         with open(fs_path, 'rb') as fh, status_line() as write_status_line:
             last = None
             start = time.time()
-            printer = StatusPrinter(start_time, write_status_line)
+            if sys.stdout.isatty():
+                printer = StatusPrinter(start_time, size, write_status_line)
 # Only upload a few bytes to start
             upload_session_start_result = self.dropbox.files_upload_session_start(fh.read(64))
             cursor = dropbox.files.UploadSessionCursor(session_id=upload_session_start_result.session_id,
@@ -139,6 +159,8 @@ class DropboxUploader(Uploader):
             while fh.tell() < size:
                 if ((size - fh.tell()) <= CHUNK_SIZE):
                     if sys.stdout.isatty():
+                        # Close out our updater thread, then write this line out.
+                        printer.queue.put(None)
                         write_status_line("Uploading last chunk (%s/s)\n" % upload_speed(size, time.time() - start))
                     res = self.dropbox.files_upload_session_finish(fh.read(CHUNK_SIZE),
                                                     cursor,
@@ -149,21 +171,7 @@ class DropboxUploader(Uploader):
                                     t = human_readable_time(int(time.time() - start))))
                 else:
                     if sys.stdout.isatty():
-                        now = time.time()
-                        progress = (float(cursor.offset) / float(size))
-                        marked = int(progress * STATUS_WIDTH)
-                        progress = int(progress * 100)
-
-                        msg = "|%s%s| %02d%% ETA: %s" % (
-                                "-" * (marked),
-                                " " * (STATUS_WIDTH - marked),
-                                progress,
-                                time_left(size, cursor.offset, start, now)
-                        )
-                        if last:
-                            msg += " (%s/s)" % upload_speed(CHUNK_SIZE, now - last)
-
-                        write_status_line(msg)
+                        printer.queue.put((time.time(), cursor.offset))
 
                     last = time.time()
                     self.dropbox.files_upload_session_append(fh.read(CHUNK_SIZE),
