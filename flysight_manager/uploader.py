@@ -59,10 +59,8 @@ class StatusPrinter(threading.Thread):
 # Update ETA, write line
                 if msg and remaining_time:
                     remaining_time -= 1
-                    self.write_line(msg.format(eta=human_readable_time(remaining_time)))
-                else:
-# Haven't been through yet, just do nothing
-                    pass
+# This is worthwhile even if the message hasn't changed, because of the spinner
+                self.write_line(msg.format(eta=human_readable_time(remaining_time)))
         log.debug("StatusWriter is terminating")
 
 
