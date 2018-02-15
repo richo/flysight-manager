@@ -21,14 +21,19 @@ class StatusPrinter(threading.Thread):
         self.size = size
         self.write_line = write_line
 
+        log.debug("Printer thread initialised")
         super(StatusPrinter, self).__init__()
 
     def run(self):
+        log.debug("Starting printer thread")
+        msg = None
+        last = None
         while True:
             try:
                 item = self.queue.get(block=True, timeout=1)
                 if item is None:
 # Let this thread die, upload is complete
+                    log.debug("Got thread termination msg")
                     break
 
                 (now, offset) = item
@@ -36,21 +41,28 @@ class StatusPrinter(threading.Thread):
                 progress = (float(offset) / float(self.size))
                 marked = int(progress * STATUS_WIDTH)
                 progress = int(progress * 100)
+                remaining_time = time_left(self.size, offset, self.start_time, now)
 
-                msg = "|%s%s| %02d%% ETA: %s" % (
+                msg = "|%s%s| %02d%% ETA: {eta}" % (
                         "-" * (marked),
                         " " * (STATUS_WIDTH - marked),
                         progress,
-                        time_left(size, offset, self.start_time, now)
+                        # time_left(size, offset, self.start_time, now)
                 )
                 if last:
                     msg += " (%s/s)" % upload_speed(CHUNK_SIZE, now - last)
 
-                write_status_line(msg)
+                self.write_line(msg.format(eta=human_readable_time(remaining_time)))
+                last = now
 
             except Queue.Empty:
 # Update ETA, write line
-                pass
+                if msg and remaining_time:
+                    remaining_time -= 1
+                    self.write_line(msg.format(eta=human_readable_time(remaining_time)))
+                else:
+# Haven't been through yet, just do nothing
+                    pass
         log.debug("StatusWriter is terminating")
 
 
@@ -84,6 +96,10 @@ def human_readable_size(size):
     return "%dt" % (float(size) / multiplier)
 
 def human_readable_time(seconds):
+# Super hacky, but we want to support handing numerics around elsewhere
+    if seconds is None:
+        return "unknown"
+
     out = ""
     if seconds > 60:
         mins, seconds = divmod(seconds, 60)
@@ -98,12 +114,11 @@ def time_left(size, uploaded, start_time, now):
     dt = float(now) - float(start_time)
     if dt < 1:
 # Unlikely to have useful data extrapolating from less than a second
-        return "unknown"
+        return None
     ds = float(uploaded)
 
     speed = dt / ds
-    remainder = (size - ds) * speed
-    return human_readable_time(remainder)
+    return (size - ds) * speed
 
 
 def upload_speed(byts, dt):
@@ -149,7 +164,8 @@ class DropboxUploader(Uploader):
             last = None
             start = time.time()
             if sys.stdout.isatty():
-                printer = StatusPrinter(start_time, size, write_status_line)
+                printer = StatusPrinter(start, size, write_status_line)
+                printer.start()
 # Only upload a few bytes to start
             upload_session_start_result = self.dropbox.files_upload_session_start(fh.read(64))
             cursor = dropbox.files.UploadSessionCursor(session_id=upload_session_start_result.session_id,
