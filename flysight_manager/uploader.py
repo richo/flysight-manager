@@ -24,6 +24,8 @@ class StatusPrinter(threading.Thread):
         log.debug("Printer thread initialised")
         super(StatusPrinter, self).__init__()
 
+        self.daemon = True
+
     def run(self):
         log.debug("Starting printer thread")
         msg = None
