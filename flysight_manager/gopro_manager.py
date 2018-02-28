@@ -8,6 +8,7 @@ import processors
 import log
 from .config import Configuration, get_poller
 from .upload_queue import UploadQueue, UploadQueueEntry
+from .uploader import VimeoUploader, NoopUploader
 
 
 class UnsupportedPlatformError(Exception):
@@ -37,6 +38,10 @@ def main():
     cfg = Configuration()
     cfg.update_with_args(args)
     uploader = cfg.uploader
+    if cfg.vimeo_enabled:
+        pre_uploader = VimeoUploader(cfg.vimeo_cfg.token, cfg.noop)
+    else:
+        pre_uploader = NoopUploader()
 
     wrapper = log.catch_exceptions
     if args.daemon:
@@ -84,7 +89,7 @@ def main():
                 this block may be invoked more than once, but
                 that's safe.
                 """
-                uploader.handle_queue(queue)
+                uploader.handle_queue(queue, pre_uploader=pre_uploader)
             network_operations()
 
             log.info("Done uploading")

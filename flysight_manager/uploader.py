@@ -127,33 +127,82 @@ def upload_speed(byts, dt):
 class Uploader(object):
     pass
 
-
-class DropboxUploader(Uploader):
-    def __init__(self, token, noop, preserve):
+class VimeoUploader(Uploader):
+    def __init__(self, token, noop):
         self.token = token
         self.noop = noop
-        self.preserve = preserve
+
+    def _authorization_header(self):
+        return "bearer %s" % self.token
+
+    def _post(self, url, payload):
+        headers = {
+                    "Authorization": self._authorization_header(),
+                    "Content-Type": "application/json",
+                    }
+        print repr(headers)
+        resp = requests.post(API_BASE + url,
+                headers = headers,
+                data = json.dumps(payload),
+                )
+        return resp
+
+
+    def upload_file(self, filename, name, description):
+        size = os.stat(filename).st_size
+        resp = self._post("/me/videos", {
+            "upload": {"approach": "tus", "size": size},
+            "name": name,
+            "description": description,
+            "privacy": {
+                "download": "false",
+                "view": "unlisted",
+                }
+            })
+
+        assert resp.status_code == 200, ("Invalid response: %d %s" % (resp.status_code, resp.text))
+
+        data = resp.json()
+
+        upload_link = data["upload"]["upload_link"]
+        log.info("[vimeo] Creating client aimed at %s" % upload_link)
+
+# Shamelessly stolen from vimeo.py
+        client = tusclient.TusClient(upload_link)
+        # client.set_headers({"Authorization": self._authorization_header()})
+
+        with open(filename) as fh:
+            uploader = client.uploader(file_stream=fh, url=upload_link, chunk_size=CHUNK_SIZE)
+            res = uploader.upload()
+            print repr(res)
+
+
+class DropboxUploader(Uploader):
+    def __init__(self, token, noop):
+        self.token = token
+        self.noop = noop
         self.dropbox = Dropbox(self.token)
         self.mode = WriteMode('overwrite')
         super(DropboxUploader, self).__init__()
 
-    def handle_queue(self, queue):
+    def handle_queue(self, queue, pre_uploader=None):
         for name, directory in queue.get_directories().items():
             log.info("[dropbox] processing %s" % repr(name))
-            for entry in directory:
+            for entry, i in enumerate(directory):
                 logical_path = os.path.join(name, entry.logical_path)
                 log.debug("[dropbox] Uploading %s to %s" % (
                     entry.physical_path, logical_path))
                 if not self.noop:
+                    if pre_uploader:
+                        # TODO figure out what to do with failed uploads
+                        pre_uploader.upload_file(entry.physical_path,
+                                "%s - %s" % (directory, os.path.basename(entry.physical_path)),
+                                "%s - Jump %d" % directory, i)
+
                     size = os.stat(entry.physical_path).st_size
                     self.upload_large_file(entry.physical_path, logical_path)
-                if self.noop:
-                    log.info("  Not removing %s, noop specified" % (entry.physical_path))
-                elif self.preserve:
-                    log.info("  Not removing %s, preserve specified" % (entry.physical_path))
                 else:
-                    log.info("  Removing %s" % entry.physical_path)
-                    os.unlink(entry.physical_path)
+                    log.info("[dropbox] not uploading because of noop")
 
 
     def upload_large_file(self, fs_path, logical_path):
