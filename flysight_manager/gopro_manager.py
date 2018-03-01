@@ -8,7 +8,7 @@ import processors
 import log
 from .config import Configuration, get_poller
 from .upload_queue import UploadQueue, UploadQueueEntry
-from .uploader import VimeoUploader, NoopUploader
+from .uploader import VimeoUploader
 
 
 class UnsupportedPlatformError(Exception):
@@ -46,6 +46,10 @@ def main():
 
     poller_class = get_poller('gopro')
 
+    uploaders = [uploader]
+    if cfg.vimeo_enabled:
+        uploaders.insert(0, VimeoUploader(cfg.vimeo_cfg.token, cfg.noop))
+
     cameras = {}
     for name, cfg in cfg.gopro_cfg.cameras().items():
         camera = Camera()
@@ -71,9 +75,6 @@ def main():
             gopro = camera.poller.mount(camera.cfg.mountpoint)
 
             queue = UploadQueue()
-            queue.add_uploader(uploader)
-            if cfg.vimeo_enabled:
-                queue.add_uploader(VimeoUploader(cfg.vimeo_cfg.token, cfg.noop))
 
             raw_queue = queue.get_directory(camera.name)
             for video in gopro.videos():
@@ -88,7 +89,7 @@ def main():
                 this block may be invoked more than once, but
                 that's safe.
                 """
-                queue.process_queue()
+                queue.process_queue(uploaders)
             network_operations()
 
             log.info("Done uploading")

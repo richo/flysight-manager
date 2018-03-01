@@ -1,4 +1,6 @@
+import os
 import collections
+import log
 
 class UploadQueueEntry(object):
     def __init__(self, physical_path, logical_path):
@@ -8,7 +10,6 @@ class UploadQueueEntry(object):
 class UploadQueue(object):
     def __init__(self):
         self.directories = collections.defaultdict(list)
-        self.uploaders = []
 
     def get_directory(self, d):
         return self.directories[d]
@@ -16,15 +17,12 @@ class UploadQueue(object):
     def get_directories(self):
         return self.directories
 
-    def add_uploader(self, uploader):
-        self.uploaders.append(uploader)
-
-    def process_queue(self, preserve=False):
+    def process_queue(self, uploaders, preserve=False):
         for name, directory in self.directories.items():
-            log.info("processing %s" % repr(name))
-            for entry, i in enumerate(directory):
+            log.info("[queue] processing %s" % repr(name))
+            for i, entry in enumerate(directory):
                 logical_path = os.path.join(name, entry.logical_path)
-                for uploader in self.uploaders:
+                for uploader in uploaders:
                     uploader.upload(entry.physical_path, logical_path)
                 if not preserve:
                     log.info("Removing %s" % entry.physical_path)

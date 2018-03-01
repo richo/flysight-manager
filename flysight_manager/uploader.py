@@ -5,6 +5,9 @@ import time
 import threading
 import Queue
 from dropbox import Dropbox
+import requests
+from tusclient import client as tusclient
+import json
 
 import dropbox.files
 from dropbox.files import WriteMode
@@ -13,6 +16,7 @@ import log
 
 CHUNK_SIZE = 4 * 1024 * 1024
 STATUS_WIDTH = 60
+VIMEO_API_BASE = "https://api.vimeo.com"
 
 class StatusPrinter(threading.Thread):
     def __init__(self, start_time, size, write_line):
@@ -21,13 +25,12 @@ class StatusPrinter(threading.Thread):
         self.size = size
         self.write_line = write_line
 
-        log.debug("Printer thread initialised")
         super(StatusPrinter, self).__init__()
 
         self.daemon = True
 
     def run(self):
-        log.debug("Starting printer thread")
+        log.debug("[printer] Starting printer thread")
         msg = None
         last = None
         while True:
@@ -35,7 +38,7 @@ class StatusPrinter(threading.Thread):
                 item = self.queue.get(block=True, timeout=1)
                 if item is None:
 # Let this thread die, upload is complete
-                    log.debug("Got thread termination msg")
+                    log.debug("[printer] Got thread termination msg")
                     break
 
                 (now, offset) = item
@@ -140,16 +143,20 @@ class VimeoUploader(Uploader):
                     "Authorization": self._authorization_header(),
                     "Content-Type": "application/json",
                     }
-        print repr(headers)
-        resp = requests.post(API_BASE + url,
+        resp = requests.post(VIMEO_API_BASE + url,
                 headers = headers,
                 data = json.dumps(payload),
                 )
         return resp
 
 
+    def upload(self, fs_path, logical_path):
+        """The logical path abstraction is a bit goofy"""
+        return self.upload_file(fs_path, logical_path, logical_path)
+
     def upload_file(self, filename, name, description):
         size = os.stat(filename).st_size
+        log.info("[vimeo] Uploading %s as name: %s description: %s" % (filename, name, description))
         resp = self._post("/me/videos", {
             "upload": {"approach": "tus", "size": size},
             "name": name,
@@ -160,21 +167,25 @@ class VimeoUploader(Uploader):
                 }
             })
 
+# TODO cleanup here if this is false, we probably still created a video object
         assert resp.status_code == 200, ("Invalid response: %d %s" % (resp.status_code, resp.text))
+
 
         data = resp.json()
 
         upload_link = data["upload"]["upload_link"]
-        log.info("[vimeo] Creating client aimed at %s" % upload_link)
+        log.debug("[vimeo] Creating client aimed at %s" % upload_link)
 
 # Shamelessly stolen from vimeo.py
         client = tusclient.TusClient(upload_link)
         # client.set_headers({"Authorization": self._authorization_header()})
 
         with open(filename) as fh:
+# TODO likewise if this fails we've left garbage behind
             uploader = client.uploader(file_stream=fh, url=upload_link, chunk_size=CHUNK_SIZE)
-            res = uploader.upload()
-            print repr(res)
+            while uploader.offset < uploader.stop_at:
+# TODO do the line printer dance here
+                uploader.upload_chunk()
 
 
 class DropboxUploader(Uploader):
