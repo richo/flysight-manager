@@ -196,15 +196,23 @@ class VimeoUploader(Uploader):
 # Shamelessly stolen from vimeo.py
         client = tusclient.TusClient(upload_link)
 
+        start = time.time()
         try:
-            with open(filename) as fh:
+            with open(filename) as fh, status_line() as write_status_line:
 # TODO likewise if this fails we've left garbage behind
+                if sys.stdout.isatty():
+                    printer = StatusPrinter(start, size, write_status_line)
+                    printer.start()
                 uploader = client.uploader(file_stream=fh, url=upload_link, chunk_size=CHUNK_SIZE)
                 while uploader.offset < uploader.stop_at:
-# TODO do the line printer dance here
+                    if sys.stdout.isatty():
+                        printer.queue.put((time.time(), uploader.offset))
                     uploader.upload_chunk()
         except Exception as e:
+            printer.queue.put(None)
             delete_invalid_video(str(e))
+        finally:
+            printer.queue.put(None)
 
 
 class DropboxUploader(Uploader):
