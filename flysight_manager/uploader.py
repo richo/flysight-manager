@@ -206,6 +206,7 @@ class YoutubeUploader(Uploader):
                         printer.queue.put((time.time(), request.resumable_progress))
                     if response is not None:
                         printer.queue.put(None)
+                        printer.join()
                         if 'id' in response:
                             write_status_line('[youtube] Video id "%s" was successfully uploaded.\n' % response['id'])
                         else:
@@ -271,6 +272,7 @@ class VimeoUploader(Uploader):
         def delete_invalid_video(error):
             if printer:
                 printer.queue.put(None)
+                printer.join()
             log.warn("[vimeo] video upload looks broken, deleting incomplete video")
             self._delete(video_uri)
 # Guarantee we don't accidentally continue
@@ -296,6 +298,8 @@ class VimeoUploader(Uploader):
                     if sys.stdout.isatty():
                         printer.queue.put((time.time(), uploader.offset))
                     uploader.upload_chunk()
+                printer.queue.put(None)
+                printer.join()
                 write_status_line("[vimeo] Uploaded {name} in {t}\n"
                         .format(
                             name=name,
