@@ -133,6 +133,63 @@ def upload_speed(byts, dt):
 class Uploader(object):
     pass
 
+class YoutubeUploader(Uploader):
+    def __init__(self, token, noop):
+# This is sort of shitty, but the dependencies for this thing are the fucking worst, so we don't try to get em till we need em
+        self.token = token
+        self.noop = noop
+
+    def _get_authenticated_service(self):
+        from googleapiclient.discovery import build
+        from oauth2client.client import AccessTokenCredentials
+        API_SERVICE_NAME = 'youtube'
+        API_VERSION = 'v3'
+
+        credentials = AccessTokenCredentials(self.token, 'flysight-manager/0.0.0')
+        log.debug("[youtube] creating service object")
+        return build(API_SERVICE_NAME, API_VERSION, credentials = credentials)
+
+    def upload(self, fs_path, logical_path):
+        """The logical path abstraction is a bit goofy"""
+        return self.upload_file(fs_path, logical_path, logical_path)
+
+    def upload_file(self, filename, title, description):
+        from googleapiclient.http import MediaFileUpload
+        youtube = self._get_authenticated_service()
+
+        body = {
+                "snippet": {
+                    "title": title,
+                    "description": description,
+                    "tags": [],
+                    "categoryId": "17", # sports, why not
+                    },
+                "status": {
+                    "privacyStatus": "unlisted",
+                    }
+                }
+
+        # Call the API's videos.insert method to create and upload the video.
+        insert_request = youtube.videos().insert(
+                  part=','.join(body.keys()),
+                  body=body,
+                  media_body=MediaFileUpload(filename, chunksize=CHUNK_SIZE, resumable=True)
+                  )
+        log.debug("[youtube] Created insert object")
+
+        return self.real_upload(insert_request)
+
+    def real_upload(self, request):
+        response = None
+        while response is None:
+            log.debug('[youtube] Uploading file...')
+            status, response = request.next_chunk()
+            if response is not None:
+                if 'id' in response:
+                    log.info('[youtube] Video id "%s" was successfully uploaded.' % response['id'])
+                else:
+                    log.fatal('The upload failed with an unexpected response: %s' % response)
+
 class VimeoUploader(Uploader):
     def __init__(self, token, noop):
         self.token = token

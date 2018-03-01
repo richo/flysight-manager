@@ -8,7 +8,7 @@ import processors
 import log
 from .config import Configuration, get_poller
 from .upload_queue import UploadQueue, UploadQueueEntry
-from .uploader import VimeoUploader
+from .uploader import VimeoUploader, YoutubeUploader
 
 
 class UnsupportedPlatformError(Exception):
@@ -50,6 +50,8 @@ def main():
     uploaders = [uploader]
     if cfg.vimeo_enabled:
         uploaders.insert(0, VimeoUploader(cfg.vimeo_cfg.token, cfg.noop))
+    if cfg.youtube_enabled:
+        uploaders.insert(0, YoutubeUploader(cfg.youtube_cfg.token, cfg.noop))
 
     cameras = {}
     for name, cfg in cfg.gopro_cfg.cameras().items():
