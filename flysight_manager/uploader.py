@@ -185,27 +185,7 @@ class DropboxUploader(Uploader):
         self.mode = WriteMode('overwrite')
         super(DropboxUploader, self).__init__()
 
-    def handle_queue(self, queue, pre_uploader=None):
-        for name, directory in queue.get_directories().items():
-            log.info("[dropbox] processing %s" % repr(name))
-            for entry, i in enumerate(directory):
-                logical_path = os.path.join(name, entry.logical_path)
-                log.debug("[dropbox] Uploading %s to %s" % (
-                    entry.physical_path, logical_path))
-                if not self.noop:
-                    if pre_uploader:
-                        # TODO figure out what to do with failed uploads
-                        pre_uploader.upload_file(entry.physical_path,
-                                "%s - %s" % (directory, os.path.basename(entry.physical_path)),
-                                "%s - Jump %d" % directory, i)
-
-                    size = os.stat(entry.physical_path).st_size
-                    self.upload_large_file(entry.physical_path, logical_path)
-                else:
-                    log.info("[dropbox] not uploading because of noop")
-
-
-    def upload_large_file(self, fs_path, logical_path):
+    def upload(self, fs_path, logical_path):
         size = os.stat(fs_path).st_size
 
         log.info("[dropbox] Uploading %s bytes from %s" % ((human_readable_size(size)), fs_path))

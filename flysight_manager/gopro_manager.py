@@ -38,10 +38,6 @@ def main():
     cfg = Configuration()
     cfg.update_with_args(args)
     uploader = cfg.uploader
-    if cfg.vimeo_enabled:
-        pre_uploader = VimeoUploader(cfg.vimeo_cfg.token, cfg.noop)
-    else:
-        pre_uploader = NoopUploader()
 
     wrapper = log.catch_exceptions
     if args.daemon:
@@ -75,6 +71,9 @@ def main():
             gopro = camera.poller.mount(camera.cfg.mountpoint)
 
             queue = UploadQueue()
+            queue.add_uploader(uploader)
+            if cfg.vimeo_enabled:
+                queue.add_uploader(VimeoUploader(cfg.vimeo_cfg.token, cfg.noop))
 
             raw_queue = queue.get_directory(camera.name)
             for video in gopro.videos():
@@ -89,7 +88,7 @@ def main():
                 this block may be invoked more than once, but
                 that's safe.
                 """
-                uploader.handle_queue(queue, pre_uploader=pre_uploader)
+                queue.process_queue()
             network_operations()
 
             log.info("Done uploading")
