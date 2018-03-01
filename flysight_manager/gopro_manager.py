@@ -38,6 +38,7 @@ def main():
     cfg = Configuration()
     cfg.update_with_args(args)
     uploader = cfg.uploader
+    global_cfg = cfg
 
     wrapper = log.catch_exceptions
     if args.daemon:
@@ -89,7 +90,7 @@ def main():
                 this block may be invoked more than once, but
                 that's safe.
                 """
-                queue.process_queue(uploaders)
+                queue.process_queue(uploaders, preserve=global_cfg.preserve)
             network_operations()
 
             log.info("Done uploading")
