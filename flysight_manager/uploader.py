@@ -217,11 +217,11 @@ class DropboxUploader(Uploader):
                     if sys.stdout.isatty():
                         # Close out our updater thread, then write this line out.
                         printer.queue.put(None)
-                        write_status_line("Uploading last chunk (%s/s)\n" % upload_speed(size, time.time() - start))
+                        write_status_line("[dropbox] Uploading last chunk (%s/s)\n" % upload_speed(size, time.time() - start))
                     res = self.dropbox.files_upload_session_finish(fh.read(CHUNK_SIZE),
                                                     cursor,
                                                     commit)
-                    log.info("Uploaded {p.name} to {p.path_lower} in {t}"
+                    log.info("[dropbox] Uploaded {p.name} to {p.path_lower} in {t}"
                                 .format(
                                     p = res,
                                     t = human_readable_time(int(time.time() - start))))
