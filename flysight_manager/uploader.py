@@ -18,6 +18,9 @@ CHUNK_SIZE = 4 * 1024 * 1024
 STATUS_WIDTH = 60
 VIMEO_API_BASE = "https://api.vimeo.com"
 
+class VimeoUploadFailed(BaseException):
+    pass
+
 class StatusPrinter(threading.Thread):
     def __init__(self, start_time, size, write_line):
         self.queue = Queue.Queue()
@@ -149,6 +152,14 @@ class VimeoUploader(Uploader):
                 )
         return resp
 
+    def _delete(self, url):
+        headers = {
+                    "Authorization": self._authorization_header(),
+                    }
+        resp = requests.delete(VIMEO_API_BASE + url,
+                headers = headers,
+                )
+        return resp
 
     def upload(self, fs_path, logical_path):
         """The logical path abstraction is a bit goofy"""
@@ -167,25 +178,33 @@ class VimeoUploader(Uploader):
                 }
             })
 
-# TODO cleanup here if this is false, we probably still created a video object
-        assert resp.status_code == 200, ("Invalid response: %d %s" % (resp.status_code, resp.text))
-
-
         data = resp.json()
+        video_uri = data['uri']
+
+        def delete_invalid_video(error):
+            log.warn("[vimeo] video upload looks broken, deleting incomplete video")
+            self._delete(video_uri)
+# Guarantee we don't accidentally continue
+            raise VimeoUploadFailed(error)
+
+        if resp.status_code != 200:
+            delete_invalid_video(resp.text)
 
         upload_link = data["upload"]["upload_link"]
         log.debug("[vimeo] Creating client aimed at %s" % upload_link)
 
 # Shamelessly stolen from vimeo.py
         client = tusclient.TusClient(upload_link)
-        # client.set_headers({"Authorization": self._authorization_header()})
 
-        with open(filename) as fh:
+        try:
+            with open(filename) as fh:
 # TODO likewise if this fails we've left garbage behind
-            uploader = client.uploader(file_stream=fh, url=upload_link, chunk_size=CHUNK_SIZE)
-            while uploader.offset < uploader.stop_at:
+                uploader = client.uploader(file_stream=fh, url=upload_link, chunk_size=CHUNK_SIZE)
+                while uploader.offset < uploader.stop_at:
 # TODO do the line printer dance here
-                uploader.upload_chunk()
+                    uploader.upload_chunk()
+        except Exception as e:
+            delete_invalid_video(str(e))
 
 
 class DropboxUploader(Uploader):
