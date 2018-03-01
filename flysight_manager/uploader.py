@@ -2,6 +2,7 @@ import os
 import sys
 import contextlib
 import time
+import datetime
 import threading
 import Queue
 from dropbox import Dropbox
@@ -137,18 +138,26 @@ class Uploader(object):
     pass
 
 class YoutubeUploader(Uploader):
-    def __init__(self, token, noop):
+    def __init__(self, cfg, noop):
 # This is sort of shitty, but the dependencies for this thing are the fucking worst, so we don't try to get em till we need em
-        self.token = token
+        self.cfg = cfg
         self.noop = noop
 
     def _get_authenticated_service(self):
         from googleapiclient.discovery import build
-        from oauth2client.client import AccessTokenCredentials
+        from oauth2client.client import AccessTokenCredentials, GoogleCredentials
         API_SERVICE_NAME = 'youtube'
         API_VERSION = 'v3'
 
-        credentials = AccessTokenCredentials(self.token, 'flysight-manager/0.0.0')
+        # credentials = AccessTokenCredentials(self.token, 'flysight-manager/0.0.0')
+        credentials = GoogleCredentials(
+                self.cfg.access_token,
+                self.cfg.client_id,
+                self.cfg.client_secret,
+                self.cfg.refresh_token,
+                datetime.datetime(2018, 3, 1, 1, 37, 8, 846706), # lol
+                self.cfg.token_uri,
+                'flysight-manager/0.0.0')
 
         log.debug("[youtube] creating service object")
         return build(API_SERVICE_NAME, API_VERSION, credentials = credentials)

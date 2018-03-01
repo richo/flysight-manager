@@ -146,7 +146,11 @@ class Configuration(object):
     def load_youtube_opts(self, cfg):
         get = lambda x: cfg["youtube"][x]
         _cfg = VimeoConfig()
-        _cfg.token = get("token")
+        _cfg.access_token = get("access_token")
+        _cfg.client_id = get("client_id")
+        _cfg.client_secret = get("client_secret")
+        _cfg.refresh_token = get("refresh_token")
+        _cfg.token_uri = get("token_uri")
         return _cfg
 
     def load_gopro_opts(self, cfg):

@@ -51,7 +51,7 @@ def main():
     if cfg.vimeo_enabled:
         uploaders.insert(0, VimeoUploader(cfg.vimeo_cfg.token, cfg.noop))
     if cfg.youtube_enabled:
-        uploaders.insert(0, YoutubeUploader(cfg.youtube_cfg.token, cfg.noop))
+        uploaders.insert(0, YoutubeUploader(cfg.youtube_cfg, cfg.noop))
 
     cameras = {}
     for name, cfg in cfg.gopro_cfg.cameras().items():
