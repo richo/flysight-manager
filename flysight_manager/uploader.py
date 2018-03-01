@@ -20,6 +20,8 @@ VIMEO_API_BASE = "https://api.vimeo.com"
 
 class VimeoUploadFailed(BaseException):
     pass
+class YoutubeUploadFailed(BaseException):
+    pass
 
 class StatusPrinter(threading.Thread):
     def __init__(self, start_time, size, write_line):
@@ -68,7 +70,8 @@ class StatusPrinter(threading.Thread):
                 if msg and remaining_time:
                     remaining_time -= 1
 # This is worthwhile even if the message hasn't changed, because of the spinner
-                self.write_line(msg.format(eta=human_readable_time(remaining_time)))
+                if msg:
+                    self.write_line(msg.format(eta=human_readable_time(remaining_time)))
         log.debug("StatusWriter is terminating")
 
 
@@ -146,6 +149,7 @@ class YoutubeUploader(Uploader):
         API_VERSION = 'v3'
 
         credentials = AccessTokenCredentials(self.token, 'flysight-manager/0.0.0')
+
         log.debug("[youtube] creating service object")
         return build(API_SERVICE_NAME, API_VERSION, credentials = credentials)
 
@@ -154,8 +158,11 @@ class YoutubeUploader(Uploader):
         return self.upload_file(fs_path, logical_path, logical_path)
 
     def upload_file(self, filename, title, description):
+        size = os.stat(filename).st_size
         from googleapiclient.http import MediaFileUpload
         youtube = self._get_authenticated_service()
+
+        log.info("[youtube] Uploading %s bytes from %s as name: %s description: %s" % (human_readable_size(size), filename, title, description))
 
         body = {
                 "snippet": {
@@ -170,25 +177,36 @@ class YoutubeUploader(Uploader):
                 }
 
         # Call the API's videos.insert method to create and upload the video.
-        insert_request = youtube.videos().insert(
+        request = youtube.videos().insert(
                   part=','.join(body.keys()),
                   body=body,
                   media_body=MediaFileUpload(filename, chunksize=CHUNK_SIZE, resumable=True)
                   )
         log.debug("[youtube] Created insert object")
 
-        return self.real_upload(insert_request)
-
-    def real_upload(self, request):
-        response = None
-        while response is None:
-            log.debug('[youtube] Uploading file...')
-            status, response = request.next_chunk()
-            if response is not None:
-                if 'id' in response:
-                    log.info('[youtube] Video id "%s" was successfully uploaded.' % response['id'])
-                else:
-                    log.fatal('The upload failed with an unexpected response: %s' % response)
+        start = time.time()
+        try:
+            with status_line() as write_status_line:
+                if sys.stdout.isatty():
+                    printer = StatusPrinter(start, size, write_status_line)
+                    printer.start()
+                response = None
+                while response is None:
+                    status, response = request.next_chunk()
+                    if sys.stdout.isatty():
+                        printer.queue.put((time.time(), request.resumable_progress))
+                    if response is not None:
+                        if 'id' in response:
+                            log.info('[youtube] Video id "%s" was successfully uploaded.' % response['id'])
+                        else:
+                            log.warn('The upload failed with an unexpected response: %s' % response)
+                            raise YoutubeUploadFailed(str(response))
+        finally:
+            printer.queue.put(None)
+        log.info("[youtube] Uploaded {title} in {t}"
+                    .format(
+                        title=title,
+                        t = human_readable_time(int(time.time() - start))))
 
 class VimeoUploader(Uploader):
     def __init__(self, token, noop):
@@ -259,7 +277,6 @@ class VimeoUploader(Uploader):
         start = time.time()
         try:
             with open(filename) as fh, status_line() as write_status_line:
-# TODO likewise if this fails we've left garbage behind
                 if sys.stdout.isatty():
                     printer = StatusPrinter(start, size, write_status_line)
                     printer.start()
