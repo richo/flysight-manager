@@ -7,6 +7,10 @@ token="TOKEN_GOES_HERE"
 
 [vimeo]
 token="TOKEN_GOES_HERE"
+enabled = "false"
+
+[youtube]
+token="TOKEN_GOES_HERE"
 enabled = "true"
 
 [flysight]

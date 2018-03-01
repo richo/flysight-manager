@@ -17,11 +17,13 @@ class ConfigError(Exception):
 class FlysightConfig(object):
     pass
 
-
 class DropboxConfig(object):
     pass
 
 class VimeoConfig(object):
+    pass
+
+class YoutubeConfig(object):
     pass
 
 class CameraConfig(object):
@@ -81,6 +83,7 @@ class Configuration(object):
         self.gopro_enabled = False
         self.gswoop_enabled = False
         self.vimeo_enabled = False
+        self.youtube_enabled = False
         self.noop = False
         self.preserve = False
 
@@ -124,6 +127,10 @@ class Configuration(object):
             self.vimeo_enabled = True
             self.vimeo_cfg = self.load_vimeo_opts(cfg)
 
+        if enabled("youtube"):
+            self.youtube_enabled = True
+            self.youtube_cfg = self.load_youtube_opts(cfg)
+
     def load_dropbox_opts(self, cfg):
         get = lambda x: cfg["dropbox"][x]
         _cfg = DropboxConfig()
@@ -132,6 +139,12 @@ class Configuration(object):
 
     def load_vimeo_opts(self, cfg):
         get = lambda x: cfg["vimeo"][x]
+        _cfg = VimeoConfig()
+        _cfg.token = get("token")
+        return _cfg
+
+    def load_youtube_opts(self, cfg):
+        get = lambda x: cfg["youtube"][x]
         _cfg = VimeoConfig()
         _cfg.token = get("token")
         return _cfg
