@@ -42,7 +42,7 @@ def main():
 
     wrapper = log.catch_exceptions
     if args.daemon:
-        log.info("Setting up retry wrapper")
+        log.info("[gopro] Setting up retry wrapper")
         wrapper = log.catch_exceptions_and_retry
 
     poller_class = get_poller('gopro')
@@ -65,7 +65,7 @@ def main():
 
     while True:
         mountpoints, uuids = zip(*map(lambda x: (x.cfg.mountpoint, x.cfg.uuid), cameras.values()))
-        log.info("Watching for gopros at %s (%s)" % (mountpoints, uuids))
+        log.info("[gopro] Watching for gopros at %s (%s)" % (mountpoints, uuids))
 
         attached_cameras = get_attached_cameras(cameras)
         if args.daemon:
@@ -75,6 +75,7 @@ def main():
                 raise RuntimeError("No cameras attached")
 
         for camera in attached_cameras:
+            log.info("[gopro] Uploading video files from %s" % camera.name)
             gopro = camera.poller.mount(camera.cfg.mountpoint)
 
             queue = UploadQueue()
@@ -95,13 +96,13 @@ def main():
                 queue.process_queue(uploaders, preserve=global_cfg.preserve)
             network_operations()
 
-            log.info("Done uploading")
+            log.info("[gopro] Done uploading")
 
             gopro.unmount()
         if not args.daemon:
             break
         already_seen = True
-    log.info("Done")
+    log.info("[gopro] Done")
 
 
 if __name__ == '__main__':

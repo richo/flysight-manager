@@ -207,9 +207,9 @@ class YoutubeUploader(Uploader):
                     if response is not None:
                         printer.queue.put(None)
                         if 'id' in response:
-                            log.info('[youtube] Video id "%s" was successfully uploaded.' % response['id'])
+                            write_status_line('[youtube] Video id "%s" was successfully uploaded.\n' % response['id'])
                         else:
-                            log.warn('The upload failed with an unexpected response: %s' % response)
+                            write_status_line('[youtube] The upload failed with an unexpected response: %s\n' % response)
                             raise YoutubeUploadFailed(str(response))
         finally:
 # TODO Turns out YT also does the "partial upload" thing
@@ -296,15 +296,15 @@ class VimeoUploader(Uploader):
                     if sys.stdout.isatty():
                         printer.queue.put((time.time(), uploader.offset))
                     uploader.upload_chunk()
+                write_status_line("[vimeo] Uploaded {name} in {t}\n"
+                        .format(
+                            name=name,
+                            t = human_readable_time(int(time.time() - start))))
         except Exception as e:
             printer.queue.put(None)
             delete_invalid_video(str(e))
         finally:
             printer.queue.put(None)
-        log.info("[vimeo] Uploaded {name} in {t}"
-                    .format(
-                        name=name,
-                        t = human_readable_time(int(time.time() - start))))
 
 
 class DropboxUploader(Uploader):
