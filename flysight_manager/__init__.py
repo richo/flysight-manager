@@ -29,6 +29,8 @@ def main():
     args = get_argparser().parse_args()
     cfg = Configuration()
     cfg.update_with_args(args)
+    global_cfg = cfg
+    uploaders = [cfg.uploader]
 
     wrapper = log.catch_exceptions
     if args.daemon:
@@ -67,7 +69,7 @@ def main():
                 this block may be invoked more than once, but
                 that's safe.
                 """
-                cfg.uploader.handle_queue(queue)
+                queue.process_queue(uploaders, preserve=global_cfg.preserve)
             network_operations()
 
             log.info("Done uploading, cleaning directories")
