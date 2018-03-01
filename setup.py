@@ -14,7 +14,8 @@ VERSION = '0.0.0'
 requires = [
     'dropbox',
     'toml',
-    'PyVimeo',
+    'requests',
+    'tuspy',
 ]
 
 def test_suite():

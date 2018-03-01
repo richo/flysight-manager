@@ -21,6 +21,9 @@ class FlysightConfig(object):
 class DropboxConfig(object):
     pass
 
+class VimeoConfig(object):
+    pass
+
 class CameraConfig(object):
     def __init__(self, name, cfg):
         self._name = name
@@ -77,6 +80,7 @@ class Configuration(object):
         self.flysight_enabled = False
         self.gopro_enabled = False
         self.gswoop_enabled = False
+        self.vimeo_enabled = False
         self.noop = False
         self.preserve = False
 
@@ -116,9 +120,19 @@ class Configuration(object):
             self.gswoop_enabled = True
             self.gswoop_cfg = self.load_gswoop_opts(cfg)
 
+        if enabled("vimeo"):
+            self.vimeo_enabled = True
+            self.vimeo_cfg = self.load_vimeo_opts(cfg)
+
     def load_dropbox_opts(self, cfg):
         get = lambda x: cfg["dropbox"][x]
         _cfg = DropboxConfig()
+        _cfg.token = get("token")
+        return _cfg
+
+    def load_vimeo_opts(self, cfg):
+        get = lambda x: cfg["vimeo"][x]
+        _cfg = VimeoConfig()
         _cfg.token = get("token")
         return _cfg
 
@@ -147,7 +161,7 @@ class Configuration(object):
     def uploader(self):
         if not self._uploader:
             if self.storage_backend == 'dropbox':
-                self._uploader = DropboxUploader(self.dropbox_cfg.token, self.noop, self.preserve)
+                self._uploader = DropboxUploader(self.dropbox_cfg.token, self.noop)
             else:
                 raise ConfigError('Unknown storage backend: %s' % self.storage_backend)
         return self._uploader
