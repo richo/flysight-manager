@@ -166,6 +166,7 @@ class VimeoUploader(Uploader):
         return self.upload_file(fs_path, logical_path, logical_path)
 
     def upload_file(self, filename, name, description):
+        printer = None
         size = os.stat(filename).st_size
         log.info("[vimeo] Uploading %s bytes from %s as name: %s description: %s" % (human_readable_size(size), filename, name, description))
         resp = self._post("/me/videos", {
@@ -182,6 +183,8 @@ class VimeoUploader(Uploader):
         video_uri = data['uri']
 
         def delete_invalid_video(error):
+            if printer:
+                printer.queue.put(None)
             log.warn("[vimeo] video upload looks broken, deleting incomplete video")
             self._delete(video_uri)
 # Guarantee we don't accidentally continue
@@ -213,6 +216,10 @@ class VimeoUploader(Uploader):
             delete_invalid_video(str(e))
         finally:
             printer.queue.put(None)
+        log.info("[vimeo] Uploaded {name} in {t}"
+                    .format(
+                        name=name,
+                        t = human_readable_time(int(time.time() - start))))
 
 
 class DropboxUploader(Uploader):
