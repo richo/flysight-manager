@@ -156,7 +156,7 @@ class VimeoUploader(Uploader):
 
     def upload_file(self, filename, name, description):
         size = os.stat(filename).st_size
-        log.info("[vimeo] Uploading %s as name: %s description: %s" % (filename, name, description))
+        log.info("[vimeo] Uploading %s bytes from %s as name: %s description: %s" % (human_readable_size(size), filename, name, description))
         resp = self._post("/me/videos", {
             "upload": {"approach": "tus", "size": size},
             "name": name,
