@@ -196,12 +196,14 @@ class YoutubeUploader(Uploader):
                     if sys.stdout.isatty():
                         printer.queue.put((time.time(), request.resumable_progress))
                     if response is not None:
+                        printer.queue.put(None)
                         if 'id' in response:
                             log.info('[youtube] Video id "%s" was successfully uploaded.' % response['id'])
                         else:
                             log.warn('The upload failed with an unexpected response: %s' % response)
                             raise YoutubeUploadFailed(str(response))
         finally:
+# TODO Turns out YT also does the "partial upload" thing
             printer.queue.put(None)
         log.info("[youtube] Uploaded {title} in {t}"
                     .format(
