@@ -13,8 +13,8 @@ from flask import Flask, render_template, redirect, request, url_for, \
     session, Response, send_file
 import dropbox
 
-APP_KEY = os.getenv('DROPBOX_KEY')
-APP_SECRET = os.getenv('DROPBOX_SECRET')
+DROPBOX_KEY = os.getenv('DROPBOX_KEY')
+DROPBOX_SECRET = os.getenv('DROPBOX_SECRET')
 
 app = Flask(__name__)
 app.secret_key = base64.b64encode(os.urandom(64))
@@ -23,7 +23,7 @@ app.secret_key = base64.b64encode(os.urandom(64))
 def get_dropbox_flow():
     redirect_uri = url_for('/dropbox/finish', _external=True, _scheme='https')
 
-    return dropbox.client.DropboxOAuth2Flow(APP_KEY, APP_SECRET,
+    return dropbox.client.DropboxOAuth2Flow(DROPBOX_KEY, DROPBOX_SECRET,
             redirect_uri, session, "dropbox-auth-csrf-token")
 
 
