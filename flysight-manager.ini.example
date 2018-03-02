@@ -12,10 +12,9 @@ enabled = "false"
 [youtube]
 access_token = "TOKEN_GOES_HERE"
 client_id = "TOKEN_GOES_HERE"
-client_secret = "TOKEN_GOES_HERE"
 refresh_token = "TOKEN_GOES_HERE"
 token_uri = "https://accounts.google.com/o/oauth2/token"
-enabled = "true"
+enabled = "false"
 
 [flysight]
 enabled = "true"

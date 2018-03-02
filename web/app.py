@@ -2,12 +2,8 @@
 import io
 import os
 import sys
+import toml
 import base64
-
-if sys.version_info.major == 2:
-    import ConfigParser as configparser
-else:
-    import configparser
 
 from flask import Flask, render_template, redirect, request, url_for, \
     session, Response, send_file
@@ -41,24 +37,21 @@ def authorize():
 @app.route('/dropbox/finish')
 def finish():
     access_token, _, _ = get_flow().finish(request.args)
+    session["dropbox"]["access_token"]
 
-    return send_file(build_config(access_token), mimetype="text/ini",
+
+@app.route('/config')
+def config():
+    return send_file(build_config(), mimetype="text/ini",
             as_attachment=True,
             attachment_filename="flysight-manager.ini")
 
-def build_config(token):
-    defaults = {
-            'mountpoint': 'flysight',
-            'storage_backend': 'dropbox',
-            'dropbox_token': token,
-    }
+def build_config():
+    config = toml.load(open('flysight-manager.ini.example'))
 
-    cfg = configparser.RawConfigParser()
-    cfg.add_section('flysight-manager')
-    for k, v in defaults.items():
-        cfg.set('flysight-manager', k, v)
     writer = io.BytesIO()
-    cfg.write(writer)
+    config = toml.dumps(config)
+    writer.write(bytes(config))
 
     writer.seek(0)
     return writer
