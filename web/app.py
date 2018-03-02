@@ -9,6 +9,15 @@ from flask import Flask, render_template, redirect, request, url_for, \
     session, Response, send_file
 import dropbox
 
+import google_auth_oauthlib.flow
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+from googleapiclient.http import MediaFileUpload
+from google_auth_oauthlib.flow import InstalledAppFlow
+from oauth2client.client import AccessTokenCredentials
+import oauth2client.client
+import google.oauth2.credentials
+
 DROPBOX_KEY = os.getenv('DROPBOX_KEY')
 DROPBOX_SECRET = os.getenv('DROPBOX_SECRET')
 
@@ -26,6 +35,14 @@ def get_dropbox_flow():
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/youtube/authorise')
+def authorize():
+    pass
+
+@app.route('/youtube/finish')
+def finish():
+    pass
 
 
 @app.route('/dropbox/authorise')
