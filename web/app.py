@@ -20,8 +20,8 @@ app = Flask(__name__)
 app.secret_key = base64.b64encode(os.urandom(64))
 
 
-def get_flow():
-    redirect_uri = url_for('finish', _external=True, _scheme='https')
+def get_dropbox_flow():
+    redirect_uri = url_for('/dropbox/finish', _external=True, _scheme='https')
 
     return dropbox.client.DropboxOAuth2Flow(APP_KEY, APP_SECRET,
             redirect_uri, session, "dropbox-auth-csrf-token")
@@ -32,13 +32,13 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/authorise')
+@app.route('/dropbox/authorise')
 def authorize():
     url = get_flow().start()
     return redirect(url)
 
 
-@app.route('/finish')
+@app.route('/dropbox/finish')
 def finish():
     access_token, _, _ = get_flow().finish(request.args)
 
