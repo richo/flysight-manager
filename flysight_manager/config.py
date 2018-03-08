@@ -89,13 +89,14 @@ class Configuration(object):
 
         self.processors = []
 
-        log.info("[config] Loading config from %s" % self.CONFIG_FILE)
+        print repr(self.CONFIG_FILE)
+        self.info("Loading config from %s" % self.CONFIG_FILE)
         cfg = toml.load(open(self.CONFIG_FILE, 'rb'))
         self.load_config(cfg)
 
         self._uploader = None
         if self.gswoop_enabled:
-            log.info("[config] Enabling gswoop processor")
+            self.info("Enabling gswoop processor")
             self.processors.append("gswoop")
 
     def load_config(self, cfg):
@@ -185,8 +186,10 @@ class Configuration(object):
 
     def update_with_args(self, args):
         if args.noop:
-            log.debug("[config] Setting noop flag")
+            self.debug("Setting noop flag")
             self.noop = args.noop
         if args.preserve:
-            log.debug("[config] Setting preserve flag")
+            self.debug("Setting preserve flag")
             self.preserve = args.preserve
+log.make_loggable(Configuration)
+

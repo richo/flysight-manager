@@ -28,7 +28,7 @@ class gSwoopProcessor(object):
 
     def _gswoop(self, args):
         args = [self.cfg.gswoop_cfg.binary] + args
-        log.info("[gswoop] %s" % repr(args))
+        self.info("[gswoop] %s" % repr(args))
         if not self.cfg.noop:
             subprocess.check_call(args)
 
@@ -36,3 +36,4 @@ class gSwoopProcessor(object):
     def _all_gswoop_products(filename):
         trimmed = filename[:-3]
         return [(trimmed + i, i) for i in ['kml', 'pdf', 'txt']]
+log.make_loggable(gSwoopProcessor)

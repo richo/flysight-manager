@@ -36,7 +36,7 @@ class StatusPrinter(threading.Thread):
         self.daemon = True
 
     def run(self):
-        log.debug("[printer] Starting printer thread")
+        self.debug("Starting printer thread")
         msg = None
         last = None
         while True:
@@ -44,7 +44,7 @@ class StatusPrinter(threading.Thread):
                 item = self.queue.get(block=True, timeout=1)
                 if item is None:
 # Let this thread die, upload is complete
-                    log.debug("[printer] Got thread termination msg")
+                    self.debug("Got thread termination msg")
                     break
 
                 (now, offset) = item
@@ -73,7 +73,8 @@ class StatusPrinter(threading.Thread):
 # This is worthwhile even if the message hasn't changed, because of the spinner
                 if msg:
                     self.write_line(msg.format(eta=human_readable_time(remaining_time)))
-        log.debug("StatusWriter is terminating")
+        self.debug("StatusWriter is terminating")
+log.make_loggable(StatusPrinter)
 
 
 @contextlib.contextmanager
@@ -159,7 +160,7 @@ class YoutubeUploader(Uploader):
                 self.cfg.token_uri,
                 'flysight-manager/0.0.0')
 
-        log.debug("[youtube] creating service object")
+        self.debug("creating service object")
         return build(API_SERVICE_NAME, API_VERSION, credentials = credentials)
 
     def upload(self, fs_path, logical_path):
@@ -171,7 +172,7 @@ class YoutubeUploader(Uploader):
         from googleapiclient.http import MediaFileUpload
         youtube = self._get_authenticated_service()
 
-        log.info("[youtube] Uploading %s bytes from %s as name: %s description: %s" % (human_readable_size(size), filename, title, description))
+        self.info("[youtube] Uploading %s bytes from %s as name: %s description: %s" % (human_readable_size(size), filename, title, description))
 
         body = {
                 "snippet": {
@@ -191,7 +192,7 @@ class YoutubeUploader(Uploader):
                   body=body,
                   media_body=MediaFileUpload(filename, chunksize=CHUNK_SIZE, resumable=True)
                   )
-        log.debug("[youtube] Created insert object")
+        self.debug("Created insert object")
 
         start = time.time()
         try:
@@ -215,10 +216,11 @@ class YoutubeUploader(Uploader):
         finally:
 # TODO Turns out YT also does the "partial upload" thing
             printer.queue.put(None)
-        log.info("[youtube] Uploaded {title} in {t}"
+        self.info("Uploaded {title} in {t}"
                     .format(
                         title=title,
                         t = human_readable_time(int(time.time() - start))))
+log.make_loggable(YoutubeUploader)
 
 class VimeoUploader(Uploader):
     def __init__(self, token, noop):
@@ -255,7 +257,7 @@ class VimeoUploader(Uploader):
     def upload_file(self, filename, name, description):
         printer = None
         size = os.stat(filename).st_size
-        log.info("[vimeo] Uploading %s bytes from %s as name: %s description: %s" % (human_readable_size(size), filename, name, description))
+        self.info("Uploading %s bytes from %s as name: %s description: %s" % (human_readable_size(size), filename, name, description))
         resp = self._post("/me/videos", {
             "upload": {"approach": "tus", "size": size},
             "name": name,
@@ -273,7 +275,7 @@ class VimeoUploader(Uploader):
             if printer:
                 printer.queue.put(None)
                 printer.join()
-            log.warn("[vimeo] video upload looks broken, deleting incomplete video")
+            self.warn("video upload looks broken, deleting incomplete video")
             self._delete(video_uri)
 # Guarantee we don't accidentally continue
             raise VimeoUploadFailed(error)
@@ -282,7 +284,7 @@ class VimeoUploader(Uploader):
             delete_invalid_video(resp.text)
 
         upload_link = data["upload"]["upload_link"]
-        log.debug("[vimeo] Creating client aimed at %s" % upload_link)
+        self.debug("Creating client aimed at %s" % upload_link)
 
 # Shamelessly stolen from vimeo.py
         client = tusclient.TusClient(upload_link)
@@ -309,6 +311,7 @@ class VimeoUploader(Uploader):
             delete_invalid_video(str(e))
         finally:
             printer.queue.put(None)
+log.make_loggable(VimeoUploader)
 
 
 class DropboxUploader(Uploader):
@@ -322,7 +325,7 @@ class DropboxUploader(Uploader):
     def upload(self, fs_path, logical_path):
         size = os.stat(fs_path).st_size
 
-        log.info("[dropbox] Uploading %s bytes from %s" % ((human_readable_size(size)), fs_path))
+        self.info("Uploading %s bytes from %s" % ((human_readable_size(size)), fs_path))
         with open(fs_path, 'rb') as fh, status_line() as write_status_line:
             last = None
             start = time.time()
@@ -344,7 +347,7 @@ class DropboxUploader(Uploader):
                     res = self.dropbox.files_upload_session_finish(fh.read(CHUNK_SIZE),
                                                     cursor,
                                                     commit)
-                    log.info("[dropbox] Uploaded {p.name} to {p.path_lower} in {t}"
+                    self.info("Uploaded {p.name} to {p.path_lower} in {t}"
                                 .format(
                                     p = res,
                                     t = human_readable_time(int(time.time() - start))))
@@ -357,3 +360,4 @@ class DropboxUploader(Uploader):
                                                     cursor.session_id,
                                                     cursor.offset)
                     cursor.offset = fh.tell()
+log.make_loggable(DropboxUploader)

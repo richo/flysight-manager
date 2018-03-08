@@ -59,12 +59,13 @@ class GoPro(object):
             )
 
     def unmount(self):
-        log.info("Trying to unmount %s" % self.path)
+        self.info("Trying to unmount %s" % self.path)
         #subprocess.check_call(['sudo', 'umount', self.path])
 
     def __del__(self):
         try:
-            log.info("Trying to unmount %s" % self.path)
+            self.info("Trying to unmount %s" % self.path)
             #subprocess.check_call(['sudo', 'umount', self.path])
         except:
-            log.warn("Error unmounting flysight, continuing")
+            self.warn("Error unmounting flysight, continuing")
+log.make_loggable(GoPro)

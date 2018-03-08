@@ -43,12 +43,13 @@ class Flysight(object):
                 )
 
     def unmount(self):
-        log.info("Trying to unmount %s" % self.path)
+        self.info("Trying to unmount %s" % self.path)
         subprocess.check_call(['sudo', 'umount', self.path])
 
     def __del__(self):
         try:
-            log.info("Trying to unmount %s" % self.path)
+            self.info("Trying to unmount %s" % self.path)
             subprocess.check_call(['sudo', 'umount', self.path])
         except Exception as e:
-            log.warn("Error unmounting flysight (%s), continuing" % (str(e)))
+            self.warn("Error unmounting flysight (%s), continuing" % (str(e)))
+log.make_loggable(Flysight)
