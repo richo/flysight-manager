@@ -45,7 +45,7 @@ class GoProMain(Main):
         return get_poller('gopro')
 
     def poller(self):
-        return self.poller_class('gopro')
+        return self.poller_class('gopro', self.cfg)
 
     def upload_run(self):
         cameras = {}
