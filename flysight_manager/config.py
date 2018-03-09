@@ -89,7 +89,6 @@ class Configuration(object):
 
         self.processors = []
 
-        print repr(self.CONFIG_FILE)
         self.info("Loading config from %s" % self.CONFIG_FILE)
         cfg = toml.load(open(self.CONFIG_FILE, 'rb'))
         self.load_config(cfg)
