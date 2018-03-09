@@ -172,7 +172,7 @@ class YoutubeUploader(Uploader):
         from googleapiclient.http import MediaFileUpload
         youtube = self._get_authenticated_service()
 
-        self.info("[youtube] Uploading %s bytes from %s as name: %s description: %s" % (human_readable_size(size), filename, title, description))
+        self.info("Uploading %s bytes from %s as name: %s description: %s" % (human_readable_size(size), filename, title, description))
 
         body = {
                 "snippet": {
@@ -333,12 +333,15 @@ class DropboxUploader(Uploader):
                 printer = StatusPrinter(start, size, write_status_line)
                 printer.start()
 # Only upload a few bytes to start
+            self.debug("Starting bootstrap upload")
             upload_session_start_result = self.dropbox.files_upload_session_start(fh.read(64))
+            self.debug("Bootstrap upload complete")
             cursor = dropbox.files.UploadSessionCursor(session_id=upload_session_start_result.session_id,
                                                        offset=fh.tell())
             commit = dropbox.files.CommitInfo(path=logical_path)
 
             while fh.tell() < size:
+                # self.debug("Entering main upload loop")
                 if ((size - fh.tell()) <= CHUNK_SIZE):
                     if sys.stdout.isatty():
                         # Close out our updater thread, then write this line out.
