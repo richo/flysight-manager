@@ -156,6 +156,10 @@ class Configuration(object):
         get = lambda x: cfg["sendgrid"][x]
         _cfg = SendgridConfig()
         _cfg.token = get("token")
+
+        _cfg.from_addr = get("from")
+        _cfg.to_addr = get("to")
+        _cfg.subject = get("subject")
         return _cfg
 
     def load_youtube_opts(self, cfg):

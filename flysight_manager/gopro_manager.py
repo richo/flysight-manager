@@ -10,6 +10,7 @@ from .run import Main
 from .config import Configuration, get_poller
 from .upload_queue import UploadQueue, UploadQueueEntry
 from .uploader import VimeoUploader, YoutubeUploader
+from .report import UploadReport
 
 
 class UnsupportedPlatformError(Exception):
@@ -60,6 +61,7 @@ class GoProMain(Main):
         already_seen = False
 
         while True:
+            report = self.start_report(UploadReport)
             mountpoints, uuids = zip(*map(lambda x: (x.cfg.mountpoint, x.cfg.uuid), cameras.values()))
             self.info("Watching for gopros at %s (%s)" % (mountpoints, uuids))
 
@@ -81,7 +83,7 @@ class GoProMain(Main):
                     raw_queue.append(UploadQueueEntry(video.fs_path, video.upload_path))
 
 
-                @self.wrapper
+                @self.wrapper(report)
                 def network_operations():
                     """Encapsulate network operations that might fail.
 
@@ -89,7 +91,7 @@ class GoProMain(Main):
                     this block may be invoked more than once, but
                     that's safe.
                     """
-                    queue.process_queue(self.uploaders, preserve=self.global_cfg.preserve)
+                    queue.process_queue(self.uploaders, preserve=self.global_cfg.preserve, report=report)
                 network_operations()
 
                 self.info("Done uploading")

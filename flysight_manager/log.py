@@ -36,29 +36,37 @@ def make_loggable(cls):
 
     return cls
 
-def catch_exceptions_and_retry(func):
-    @functools.wraps(func)
-    def inner(*args, **kwargs):
-        exc = None
-        for i in range(3):
+def catch_exceptions_and_retry(report):
+    def outer(func):
+        @functools.wraps(func)
+        def inner(*args, **kwargs):
+            exc = None
+            for i in range(3):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    exc = e
+                    info("Caught exception: %s, continuing" % (repr(e)))
+            else:
+                report.finish_with_exception(exc)
+                report.send()
+                raise exc
+
+        return inner
+    return outer
+
+
+def catch_exceptions(report):
+    def outer(func):
+        @functools.wraps(func)
+        def inner(*args, **kwargs):
             try:
-                return func(*args, **kwargs)
+                func(*args, **kwargs)
             except Exception as e:
-                exc = e
-                info("Caught exception: %s, continuing" % (repr(e)))
-        else:
-            raise exc
-
-    return inner
-
-
-def catch_exceptions(func):
-    @functools.wraps(func)
-    def inner(*args, **kwargs):
-        try:
-            func(*args, **kwargs)
-        except Exception as e:
-            if os.getenv("DEBUG"):
-                traceback.print_exc(e)
-            fatal(e)
-    return inner
+                if os.getenv("DEBUG"):
+                    traceback.print_exc(e)
+                report.finish_with_exception(e)
+                report.send()
+                fatal(e)
+        return inner
+    return outer
