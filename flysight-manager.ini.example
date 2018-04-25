@@ -31,3 +31,7 @@ uuid = "false"
 [gswoop]
 enabled = "false"
 binary = "/Applications/gSwoop.app/Contents/MacOS/gswoop"
+
+[sendgrid]
+enabled = false
+token = "TOKEN_GOES_HERE"
