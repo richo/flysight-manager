@@ -8,6 +8,7 @@ class UploadQueueEntry(object):
         self.physical_path = physical_path
         self.logical_path = logical_path
 
+@log.make_loggable
 class UploadQueue(object):
     def __init__(self):
         self.directories = collections.defaultdict(list)
