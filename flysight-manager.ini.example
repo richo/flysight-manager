@@ -6,32 +6,34 @@ storage_backend="dropbox"
 token="TOKEN_GOES_HERE"
 
 [vimeo]
+enabled = true
 token="TOKEN_GOES_HERE"
-enabled = "false"
 
 [youtube]
+enabled = true
+
 access_token = "TOKEN_GOES_HERE"
 client_id = "TOKEN_GOES_HERE"
+client_secret = "TOKEN_GOES_HERE"
 refresh_token = "TOKEN_GOES_HERE"
 token_uri = "https://accounts.google.com/o/oauth2/token"
-enabled = "false"
 
 [flysight]
-enabled = "true"
+enabled = true
 mountpoint = "/mnt/flysight"
 uuid = "false"
 
 [gopro]
-enabled = "true"
+enabled = true
 
 [gopro.video]
 mountpoint="/mnt/gopro"
 uuid = "false"
 
 [gswoop]
-enabled = "false"
+enabled = true
 binary = "/Applications/gSwoop.app/Contents/MacOS/gswoop"
 
 [sendgrid]
-enabled = false
+enabled = true
 token = "TOKEN_GOES_HERE"

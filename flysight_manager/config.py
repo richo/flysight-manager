@@ -26,6 +26,9 @@ class VimeoConfig(object):
 class YoutubeConfig(object):
     pass
 
+class SendgridConfig(object):
+    pass
+
 class CameraConfig(object):
     def __init__(self, name, cfg):
         self._name = name
@@ -84,6 +87,7 @@ class Configuration(object):
         self.gswoop_enabled = False
         self.vimeo_enabled = False
         self.youtube_enabled = False
+        self.sendgrid_enabled = False
         self.noop = False
         self.preserve = False
 
@@ -131,6 +135,10 @@ class Configuration(object):
             self.youtube_enabled = True
             self.youtube_cfg = self.load_youtube_opts(cfg)
 
+        if enabled("sendgrid"):
+            self.sendgrid_enabled = True
+            self.sendgrid_cfg = self.load_sendgrid_opts(cfg)
+
     def load_dropbox_opts(self, cfg):
         get = lambda x: cfg["dropbox"][x]
         _cfg = DropboxConfig()
@@ -143,9 +151,15 @@ class Configuration(object):
         _cfg.token = get("token")
         return _cfg
 
+    def load_sendgrid_opts(self, cfg):
+        get = lambda x: cfg["sendgrid"][x]
+        _cfg = SendgridConfig()
+        _cfg.token = get("token")
+        return _cfg
+
     def load_youtube_opts(self, cfg):
         get = lambda x: cfg["youtube"][x]
-        _cfg = VimeoConfig()
+        _cfg = YoutubeConfig()
         _cfg.access_token = get("access_token")
         _cfg.client_id = get("client_id")
         _cfg.client_secret = get("client_secret")
@@ -191,4 +205,3 @@ class Configuration(object):
             self.debug("Setting preserve flag")
             self.preserve = args.preserve
 log.make_loggable(Configuration)
-
