@@ -1,6 +1,7 @@
 import log
 from .config import Configuration, get_poller
 
+@log.make_loggable
 class Main(object):
     def __init__(self):
         self.ap = self.argument_parser()
@@ -39,4 +40,3 @@ class Main(object):
 
     def run(self):
         self.upload_run()
-log.make_loggable(Main)

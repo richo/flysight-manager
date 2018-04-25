@@ -13,6 +13,7 @@ Video = namedtuple('Video', ['fs_path',  # Path to find this flight on disk
                              ])
 
 
+@log.make_loggable
 class GoPro(object):
     # TODO They use other \d\d\dGOPRO directories
     VIDEO_PATH_REGEX = re.compile(r"\d\d\dGOPRO")
@@ -68,4 +69,3 @@ class GoPro(object):
             #subprocess.check_call(['sudo', 'umount', self.path])
         except:
             self.warn("Error unmounting flysight, continuing")
-log.make_loggable(GoPro)

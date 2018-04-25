@@ -34,6 +34,8 @@ def make_loggable(cls):
         sys.exit(1)
     cls.fatal = fatal
 
+    return cls
+
 def catch_exceptions_and_retry(func):
     @functools.wraps(func)
     def inner(*args, **kwargs):

@@ -9,6 +9,7 @@ from flysight_manager.upload_queue import UploadQueueEntry
 # FIXME: This is copypasted from the flysight handler
 TIME_RE = re.compile('(?P<year>\d{2})-(?P<month>\d{2})-(?P<day>\d{2})/(?P<hour>\d{2})-(?P<minute>\d{2})-(?P<second>\d{2})')
 
+@log.make_loggable
 class gSwoopProcessor(object):
     def __init__(self, cfg):
         self.cfg = cfg
@@ -36,4 +37,3 @@ class gSwoopProcessor(object):
     def _all_gswoop_products(filename):
         trimmed = filename[:-3]
         return [(trimmed + i, i) for i in ['kml', 'pdf', 'txt']]
-log.make_loggable(gSwoopProcessor)

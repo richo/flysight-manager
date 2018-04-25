@@ -54,6 +54,7 @@ class AbstractPoller(object):
         }[self.ty]
 
 
+@log.make_loggable
 class DirectoryPoller(AbstractPoller):
     def __init__(self, name, path, ty):
         self.path = path
@@ -64,9 +65,9 @@ class DirectoryPoller(AbstractPoller):
 
     def mount(self, _):
         return self.device_class()(self.name, self.path)
-log.make_loggable(DirectoryPoller)
 
 
+@log.make_loggable
 class VolumePoller(AbstractPoller):
 # TODO Make this unmount on exit always
     def __init__(self, name, uuid, ty):
@@ -83,4 +84,3 @@ class VolumePoller(AbstractPoller):
         subprocess.check_call(['sudo', 'mount', self._flysight_path(), path])
         self.info("Mounted %s on %s" % (self._flysight_path(), path))
         return self.device_class()(self.name, self.path)
-log.make_loggable(VolumePoller)

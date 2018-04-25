@@ -76,6 +76,7 @@ def get_poller(ty):
         raise 'Unknown platform: %s' % (repr(platform))
 
 
+@log.make_loggable
 class Configuration(object):
     """Stub class to be replaced by a real configuration system"""
 
@@ -204,4 +205,3 @@ class Configuration(object):
         if args.preserve:
             self.debug("Setting preserve flag")
             self.preserve = args.preserve
-log.make_loggable(Configuration)

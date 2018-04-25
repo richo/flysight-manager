@@ -15,6 +15,7 @@ class UnsupportedPlatformError(Exception):
     pass
 
 
+@log.make_loggable
 class FlysightMain(Main):
     def argument_parser(self):
         parser = argparse.ArgumentParser()
@@ -77,7 +78,6 @@ class FlysightMain(Main):
                 break
             already_seen = True
         self.info("Done")
-log.make_loggable(FlysightMain)
 
 def main():
     FlysightMain().run()

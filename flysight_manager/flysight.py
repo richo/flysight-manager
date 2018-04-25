@@ -13,6 +13,7 @@ Flight = namedtuple('Flight', ['fs_path',  # Path to find this flight on disk
                                ])
 
 
+@log.make_loggable
 class Flysight(object):
     DATE_RE = re.compile('(?P<year>\d{2})-(?P<month>\d{2})-(?P<day>\d{2})')
 
@@ -52,4 +53,3 @@ class Flysight(object):
             subprocess.check_call(['sudo', 'umount', self.path])
         except Exception as e:
             self.warn("Error unmounting flysight (%s), continuing" % (str(e)))
-log.make_loggable(Flysight)

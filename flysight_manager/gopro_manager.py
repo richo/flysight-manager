@@ -22,6 +22,7 @@ class Camera(object):
 def get_attached_cameras(cameras):
     return filter(lambda x: x.poller.device_attached("DCIM"), cameras.values())
 
+@log.make_loggable
 class GoProMain(Main):
     def configure_uploaders(self):
         if self.cfg.vimeo_enabled:
@@ -96,7 +97,6 @@ class GoProMain(Main):
                 break
             already_seen = True
         self.info("Done")
-log.make_loggable(GoProMain)
 
 
 def main():

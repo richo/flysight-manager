@@ -24,6 +24,7 @@ class VimeoUploadFailed(BaseException):
 class YoutubeUploadFailed(BaseException):
     pass
 
+@log.make_loggable
 class StatusPrinter(threading.Thread):
     def __init__(self, start_time, size, write_line):
         self.queue = Queue.Queue()
@@ -74,7 +75,6 @@ class StatusPrinter(threading.Thread):
                 if msg:
                     self.write_line(msg.format(eta=human_readable_time(remaining_time)))
         self.debug("StatusWriter is terminating")
-log.make_loggable(StatusPrinter)
 
 
 @contextlib.contextmanager
@@ -138,6 +138,7 @@ def upload_speed(byts, dt):
 class Uploader(object):
     pass
 
+@log.make_loggable
 class YoutubeUploader(Uploader):
     def __init__(self, cfg, noop):
 # This is sort of shitty, but the dependencies for this thing are the fucking worst, so we don't try to get em till we need em
@@ -220,8 +221,8 @@ class YoutubeUploader(Uploader):
                     .format(
                         title=title,
                         t = human_readable_time(int(time.time() - start))))
-log.make_loggable(YoutubeUploader)
 
+@log.make_loggable
 class VimeoUploader(Uploader):
     def __init__(self, token, noop):
         self.token = token
@@ -311,9 +312,9 @@ class VimeoUploader(Uploader):
             delete_invalid_video(str(e))
         finally:
             printer.queue.put(None)
-log.make_loggable(VimeoUploader)
 
 
+@log.make_loggable
 class DropboxUploader(Uploader):
     def __init__(self, token, noop):
         self.token = token
@@ -363,4 +364,3 @@ class DropboxUploader(Uploader):
                                                     cursor.session_id,
                                                     cursor.offset)
                     cursor.offset = fh.tell()
-log.make_loggable(DropboxUploader)

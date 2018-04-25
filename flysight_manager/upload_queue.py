@@ -2,6 +2,7 @@ import os
 import collections
 import log
 
+@log.make_loggable
 class UploadQueueEntry(object):
     def __init__(self, physical_path, logical_path):
         self.physical_path = physical_path
@@ -29,4 +30,3 @@ class UploadQueue(object):
                     os.unlink(entry.physical_path)
                 else:
                     self.info("Not removing %s, preserve specified" % entry.physical_path)
-log.make_loggable(UploadQueue)
