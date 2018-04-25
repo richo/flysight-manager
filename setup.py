@@ -13,6 +13,7 @@ VERSION = '0.0.0'
 
 requires = [
     'dropbox',
+    'sendgrid',
     'toml',
     'requests',
     'tuspy',
