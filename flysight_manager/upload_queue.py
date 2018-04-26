@@ -19,13 +19,15 @@ class UploadQueue(object):
     def get_directories(self):
         return self.directories
 
-    def process_queue(self, uploaders, preserve=False):
+    def process_queue(self, uploaders, preserve=False, report=None):
         for name, directory in self.directories.items():
             self.info("processing %s" % repr(name))
             for i, entry in enumerate(directory):
                 logical_path = os.path.join(name, entry.logical_path)
                 for uploader in uploaders:
                     uploader.upload(entry.physical_path, logical_path)
+                    if report:
+                        report.add_uploaded_file(entry.physical_path)
                 if not preserve:
                     self.info("Removing %s" % entry.physical_path)
                     os.unlink(entry.physical_path)

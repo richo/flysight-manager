@@ -12,6 +12,9 @@ class Report(object):
         return report
 
 
+def format_exception_as_reason(exc):
+    return traceback.format_exc(exc)
+
 
 @log.make_loggable
 class UploadReport(Report):
@@ -22,6 +25,7 @@ class UploadReport(Report):
         self.files = []
         self.mailer = mailer
         self.mail_cfg = mail_cfg
+        self.reason = "default reason"
 
     def add_uploaded_file(self, filename):
         self.files.append(filename)
@@ -34,7 +38,7 @@ class UploadReport(Report):
         self.reason = reason
 
     def render(self):
-        tpl = Template(TEMPLATE_FILENAME)
+        tpl = Template(open(self.TEMPLATE_FILENAME).read())
         return tpl.render(
                 reason=self.reason,
                 files=self.files,

@@ -10,14 +10,7 @@ class Mailer(object):
         self.sg = sendgrid.SendGridAPIClient(apikey=self.token)
 
     def mail(self, mail_to, mail_from, subject, body, headers={}):
-        message = sendgrid.Mail()
-
-        message.add_to(mail_to)
-        message.set_from(mail_from)
-        message.set_subject(subject)
-        message.set_html(body)
-
-        self.client.send(message)
+        message = Mail()
 
         content = Content("text/html", body)
         mail = Mail(Email(mail_from), subject, Email(mail_to), content)
