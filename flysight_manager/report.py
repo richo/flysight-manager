@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 
 import log
+import time
 from jinja2 import Template
 import traceback
 
 class Report(object):
+    TIME_FMT = ": %y/%m/%d %H:%M %z (%Z)"
     def __init__(self):
         self.logs = log.LogAggregator.new()
+        self.started = time.strftime(TIME_FMT)
 
 def format_exception_as_reason(exc):
     return traceback.format_exc(exc)
@@ -48,5 +51,5 @@ class UploadReport(Report):
         self.mailer.mail(
                 self.mail_cfg['to'],
                 self.mail_cfg['from'],
-                self.mail_cfg['subject'],
+                self.mail_cfg['subject'] + self.started,
                 content)
