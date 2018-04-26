@@ -9,6 +9,7 @@ import log
 from run import Main
 from .config import Configuration, get_poller
 from .upload_queue import UploadQueue, UploadQueueEntry
+from .report import UploadReport
 
 
 class UnsupportedPlatformError(Exception):
@@ -33,10 +34,11 @@ class FlysightMain(Main):
     def poller(self):
         return self.poller_class('flysight', self.cfg)
 
-    def upload_run(self):
+    def upload_run(self, report):
         already_seen = False
 
         while True:
+            report = UploadReport()
             self.info("Watching for flysight at %s (%s)" % (cfg.flysight_cfg.mountpoint, cfg.flysight_cfg.uuid))
             if self.args.daemon:
                 self.poller.poll_for_attach(already_attached=already_seen)
@@ -56,7 +58,7 @@ class FlysightMain(Main):
                         processor.process(flight, queue)
 
 
-                @self.wrapper
+                @self.wrapper(report)
                 def network_operations():
                     """Encapsulate network operations that might fail.
 
@@ -65,6 +67,7 @@ class FlysightMain(Main):
                     that's safe.
                     """
                     queue.process_queue(self.uploaders, preserve=global_cfg.preserve)
+
                 network_operations()
 
                 self.info("Done uploading, cleaning directories")

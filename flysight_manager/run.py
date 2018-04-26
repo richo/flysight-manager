@@ -1,5 +1,6 @@
 import log
 from .config import Configuration, get_poller
+from .mailer import Mailer
 
 @log.make_loggable
 class Main(object):
@@ -9,6 +10,9 @@ class Main(object):
 
         self.cfg = Configuration()
         self.global_cfg = self.cfg
+
+        # TODO null mailer for disabled?
+        self.mailer = Mailer(self.cfg.sendgrid_cfg)
 
         self.cfg.update_with_args(self.args)
         self.poller_class = self.poller_class()
@@ -25,6 +29,14 @@ class Main(object):
         if self.args.daemon:
             self.info("Setting up retry wrapper")
             self.wrapper = log.catch_exceptions_and_retry
+
+    def start_report(self, report_class):
+        report = report_class(self.mailer,
+                { 'to': self.cfg.sendgrid_cfg.to_addr,
+                  'from': self.cfg.sendgrid_cfg.from_addr,
+                  'subject': self.cfg.sendgrid_cfg.subject,
+                    })
+        return report
 
     def configure_uploaders(self):
         pass
