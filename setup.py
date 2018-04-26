@@ -20,6 +20,7 @@ requires = [
     'urllib3',
     'requests',
     'tuspy',
+    'jinja2',
     'google-api-python-client',
     'google-auth-httplib2',
     'google-auth-oauthlib',
