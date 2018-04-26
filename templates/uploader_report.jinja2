@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang=en>
+    <head>
+        <meta charset=utf-8>
+        <title>uploader report</title>
+    </head>
+    <body>
+      Files uploaded:
+      <ul>
+      {% for file in files %}
+      <li>{{file.fs_path}}</li>
+      {% endfor %}
+      </ul>
+
+      {% if reason %}
+      <div>
+        <h3>Reason</h3>
+        {{ reason }}
+      </div>
+      {% endif %}
+
+
+    </body>
+</html>
+

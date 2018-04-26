@@ -25,7 +25,7 @@ class UploadReport(Report):
         self.files = []
         self.mailer = mailer
         self.mail_cfg = mail_cfg
-        self.reason = "default reason"
+        self.reason = None
 
     def add_uploaded_file(self, filename):
         self.files.append(filename)
