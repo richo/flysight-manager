@@ -14,11 +14,16 @@
 
       {% if reason %}
       <div>
-        <h3>Reason</h3>
+        <h3>Exit Reason</h3>
         {{ reason }}
       </div>
       {% endif %}
 
+      <h3>Full log</h3>
+      <pre>
+{% for log in logs %}
+{{ log }}{% endfor %}
+      </pre>
 
     </body>
 </html>

@@ -3,13 +3,26 @@ import sys
 import functools
 import traceback
 
+class LogAggregator(object):
+    logs = None
+
+    @classmethod
+    def new(cls):
+        cls.logs = []
+        return cls.logs
+
+    @classmethod
+    def add(cls, l):
+        if cls.logs is not None:
+            return cls.logs.append(l)
+
 
 # Oh god why isn't there a standard package for this.
 def make_logger(c, enabled=lambda: True):
     def inner(msg, args=()):
         if enabled():
             fmt = "[%s] %s" % (c, msg)
-            # Cope gracefully with printf style invocations
+            LogAggregator.add(fmt % args)
             print(fmt % args)
     return inner
 
@@ -44,6 +57,10 @@ def catch_exceptions_and_retry(report):
             for i in range(3):
                 try:
                     return func(*args, **kwargs)
+                except KeyboardInterrupt:
+                    report.finish("Interrupted at terminal")
+                    report.send()
+                    fatal("Interrupted at terminal")
                 except Exception as e:
                     exc = e
                     info("Caught exception: %s, continuing" % (repr(e)))
@@ -62,6 +79,10 @@ def catch_exceptions(report):
         def inner(*args, **kwargs):
             try:
                 func(*args, **kwargs)
+            except KeyboardInterrupt:
+                report.finish("Interrupted at terminal")
+                report.send()
+                fatal("Interrupted at terminal")
             except Exception as e:
                 if os.getenv("DEBUG"):
                     traceback.print_exc(e)

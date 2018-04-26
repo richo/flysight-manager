@@ -5,12 +5,8 @@ from jinja2 import Template
 import traceback
 
 class Report(object):
-    @classmethod
-    def start(cls):
-        report = cls()
-
-        return report
-
+    def __init__(self):
+        self.logs = log.LogAggregator.new()
 
 def format_exception_as_reason(exc):
     return traceback.format_exc(exc)
@@ -26,6 +22,8 @@ class UploadReport(Report):
         self.mailer = mailer
         self.mail_cfg = mail_cfg
         self.reason = None
+        super(UploadReport, self).__init__()
+
 
     def add_uploaded_file(self, filename):
         self.files.append(filename)
@@ -42,6 +40,7 @@ class UploadReport(Report):
         return tpl.render(
                 reason=self.reason,
                 files=self.files,
+                logs=self.logs
                 )
 
     def send(self):
