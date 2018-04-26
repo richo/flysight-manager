@@ -56,7 +56,10 @@ def catch_exceptions_and_retry(report):
             exc = None
             for i in range(3):
                 try:
-                    return func(*args, **kwargs)
+                    ret = func(*args, **kwargs)
+                    report.finish()
+                    report.send()
+                    return ret
                 except KeyboardInterrupt:
                     report.finish("Interrupted at terminal")
                     report.send()
@@ -78,7 +81,10 @@ def catch_exceptions(report):
         @functools.wraps(func)
         def inner(*args, **kwargs):
             try:
-                func(*args, **kwargs)
+                ret = func(*args, **kwargs)
+                report.finish()
+                report.send()
+                return ret
             except KeyboardInterrupt:
                 report.finish("Interrupted at terminal")
                 report.send()

@@ -67,7 +67,7 @@ class GoProMain(Main):
 
             attached_cameras = get_attached_cameras(cameras)
             if self.args.daemon:
-                poller.poll_for_attach(already_attached=already_seen)
+                self.poller().poll_for_attach(already_attached=already_seen)
             else:
                 if len(attached_cameras) == 0:
                     raise RuntimeError("No cameras attached")

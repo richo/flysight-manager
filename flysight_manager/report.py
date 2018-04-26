@@ -9,7 +9,7 @@ class Report(object):
     TIME_FMT = ": %y/%m/%d %H:%M %z (%Z)"
     def __init__(self):
         self.logs = log.LogAggregator.new()
-        self.started = time.strftime(TIME_FMT)
+        self.started = time.strftime(self.TIME_FMT)
 
 def format_exception_as_reason(exc):
     return traceback.format_exc(exc)
@@ -35,8 +35,8 @@ class UploadReport(Report):
         reason = format_exception_as_reason(exc)
         self.finish
 
-    def finish(self, reason):
-        self.reason = reason
+    def finish(self):
+        self.reason = None
 
     def render(self):
         tpl = Template(open(self.TEMPLATE_FILENAME).read())
