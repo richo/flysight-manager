@@ -9,14 +9,20 @@ from dropbox import Dropbox
 import requests
 from tusclient import client as tusclient
 import json
+import subprocess
 
 import dropbox.files
 from dropbox.files import WriteMode
 
+def get_terminal_size():
+    out = subprocess.check_output(['stty', 'size'])
+    columns = int(out.split()[1])
+    return columns
+STATUS_WIDTH = 60
+
 import log
 
 CHUNK_SIZE = 4 * 1024 * 1024
-STATUS_WIDTH = 60
 VIMEO_API_BASE = "https://api.vimeo.com"
 
 class VimeoUploadFailed(BaseException):
@@ -50,14 +56,16 @@ class StatusPrinter(threading.Thread):
 
                 (now, offset) = item
 
+                width = get_terminal_size() - 34 # Width of extra padding
+
                 progress = (float(offset) / float(self.size))
-                marked = int(progress * STATUS_WIDTH)
+                marked = int(progress * width)
                 progress = int(progress * 100)
                 remaining_time = time_left(self.size, offset, self.start_time, now)
 
                 msg = "|%s%s| %02d%% ETA: {eta}" % (
                         "-" * (marked),
-                        " " * (STATUS_WIDTH - marked),
+                        " " * (width - marked),
                         progress,
                         # time_left(size, offset, self.start_time, now)
                 )
