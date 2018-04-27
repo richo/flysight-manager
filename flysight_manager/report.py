@@ -31,6 +31,10 @@ class UploadReport(Report):
     def add_uploaded_file(self, filename):
         self.files.append(filename)
 
+    def finish_with_reason(self, reason):
+        self.reason = reason
+        self.finish()
+
     def finish_with_exception(self, exc):
         self.reason = format_exception_as_reason(exc)
         self.finish()

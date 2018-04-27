@@ -61,7 +61,7 @@ def catch_exceptions_and_retry(report):
                     report.send()
                     return ret
                 except KeyboardInterrupt:
-                    report.finish("Interrupted at terminal")
+                    report.finish_with_reason("Interrupted at terminal")
                     report.send()
                     fatal("Interrupted at terminal")
                 except Exception as e:
@@ -86,7 +86,7 @@ def catch_exceptions(report):
                 report.send()
                 return ret
             except KeyboardInterrupt:
-                report.finish("Interrupted at terminal")
+                report.finish_with_reason("Interrupted at terminal")
                 report.send()
                 fatal("Interrupted at terminal")
             except Exception as e:
