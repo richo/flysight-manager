@@ -32,11 +32,11 @@ class UploadReport(Report):
         self.files.append(filename)
 
     def finish_with_exception(self, exc):
-        reason = format_exception_as_reason(exc)
-        self.finish
+        self.reason = format_exception_as_reason(exc)
+        self.finish()
 
     def finish(self):
-        self.reason = None
+        pass
 
     def render(self):
         tpl = Template(open(self.TEMPLATE_FILENAME).read())
