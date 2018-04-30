@@ -25,9 +25,7 @@ import log
 CHUNK_SIZE = 4 * 1024 * 1024
 VIMEO_API_BASE = "https://api.vimeo.com"
 
-class VimeoUploadFailed(BaseException):
-    pass
-class YoutubeUploadFailed(BaseException):
+class UploadFailed(BaseException):
     pass
 
 @log.make_loggable
@@ -221,7 +219,7 @@ class YoutubeUploader(Uploader):
                             write_status_line('[youtube] Video id "%s" was successfully uploaded.\n' % response['id'])
                         else:
                             write_status_line('[youtube] The upload failed with an unexpected response: %s\n' % response)
-                            raise YoutubeUploadFailed(str(response))
+                            raise UploadFailed(str(response))
         finally:
 # TODO Turns out YT also does the "partial upload" thing
             printer.queue.put(None)
@@ -287,7 +285,7 @@ class VimeoUploader(Uploader):
             self.warn("video upload looks broken, deleting incomplete video")
             self._delete(video_uri)
 # Guarantee we don't accidentally continue
-            raise VimeoUploadFailed(error)
+            raise UploadFailed(error)
 
         if resp.status_code != 200:
             delete_invalid_video(resp.text)
