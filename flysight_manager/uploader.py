@@ -10,15 +10,19 @@ import requests
 from tusclient import client as tusclient
 import json
 import subprocess
+import signal
 
 import dropbox.files
 from dropbox.files import WriteMode
 
-def get_terminal_size():
-    out = subprocess.check_output(['stty', 'size'])
-    columns = int(out.split()[1])
-    return columns
+TERMINAL_WIDTH = 80
 STATUS_WIDTH = 60
+def set_terminal_size():
+    global TERMINAL_WIDTH
+    out = subprocess.check_output(['stty', 'size'])
+    TERMINAL_WIDTH = int(out.split()[1])
+set_terminal_size()
+signal.signal(signal.SIGWINCH, lambda _s, _f: set_terminal_size())
 
 import log
 
@@ -54,7 +58,7 @@ class StatusPrinter(threading.Thread):
 
                 (now, offset) = item
 
-                width = get_terminal_size() - 34 # Width of extra padding
+                width = TERMINAL_WIDTH - 34 # Width of extra padding
 
                 progress = (float(offset) / float(self.size))
                 marked = int(progress * width)
