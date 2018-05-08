@@ -34,11 +34,12 @@ class FlysightMain(Main):
     def poller(self):
         return self.poller_class('flysight', self.cfg)
 
-    def upload_run(self, report):
+    def upload_run(self):
         already_seen = False
+        cfg = self.cfg
 
         while True:
-            report = UploadReport()
+            report = self.start_report(UploadReport)
             self.info("Watching for flysight at %s (%s)" % (cfg.flysight_cfg.mountpoint, cfg.flysight_cfg.uuid))
             if self.args.daemon:
                 self.poller.poll_for_attach(already_attached=already_seen)
