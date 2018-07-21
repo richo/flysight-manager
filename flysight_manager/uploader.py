@@ -13,6 +13,8 @@ import subprocess
 import signal
 import hashlib
 
+import flysight_manager
+
 import dropbox.files
 from dropbox.files import WriteMode
 
@@ -170,7 +172,7 @@ class YoutubeUploader(Uploader):
                 self.cfg.refresh_token,
                 datetime.datetime(2018, 3, 1, 1, 37, 8, 846706), # lol
                 self.cfg.token_uri,
-                'flysight-manager/0.0.0')
+                'flysight-manager/%s' % flysight_manager.VERSION)
 
         self.debug("creating service object")
         return build(API_SERVICE_NAME, API_VERSION, credentials = credentials)
