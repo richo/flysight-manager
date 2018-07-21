@@ -11,6 +11,7 @@ from tusclient import client as tusclient
 import json
 import subprocess
 import signal
+import hashlib
 
 import dropbox.files
 from dropbox.files import WriteMode
@@ -335,8 +336,20 @@ class DropboxUploader(Uploader):
 
     def upload(self, fs_path, logical_path):
         size = os.stat(fs_path).st_size
+        self.info("Checking for duplicates at %s" % (logical_path))
+        metadata = self.dropbox.files_get_metadata(logical_path)
+        hasher = hashlib.sha256()
+        with open(fs_path, 'rb') as fh:
+            while True:
+                data = fh.read(1024)
+                if not data:
+                    break
+                hasher.update(date)
+            if hasher.hexdigest() == metadata.content_hash:
+                self.info("Already uploaded with hash %s, skipping" % metadata.content_hash)
+                return
 
-        self.info("Uploading %s bytes from %s" % ((human_readable_size(size)), fs_path))
+        self.info("Uploading %s bytes from %s to %s" % ((human_readable_size(size)), fs_path, logical_path))
         with open(fs_path, 'rb') as fh, status_line() as write_status_line:
             last = None
             start = time.time()
