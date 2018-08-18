@@ -4,7 +4,10 @@ import contextlib
 import time
 import datetime
 import threading
-import Queue
+if sys.version_info.major == 3:
+    import queue
+else:
+    import Queue
 from dropbox import Dropbox
 import requests
 from tusclient import client as tusclient
