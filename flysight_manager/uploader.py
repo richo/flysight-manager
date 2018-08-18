@@ -4,10 +4,6 @@ import contextlib
 import time
 import datetime
 import threading
-if sys.version_info.major == 3:
-    import queue
-else:
-    import Queue
 from dropbox import Dropbox
 import requests
 from tusclient import client as tusclient
@@ -19,23 +15,34 @@ import hashlib
 import dropbox.files
 from dropbox.files import WriteMode
 from .version import VERSION
+import log
+
+if sys.version_info.major == 3:
+    import queue # noqa F401
+else:
+    import Queue
 
 TERMINAL_WIDTH = 80
 STATUS_WIDTH = 60
+
+
 def set_terminal_size():
     global TERMINAL_WIDTH
     out = subprocess.check_output(['stty', 'size'])
     TERMINAL_WIDTH = int(out.split()[1])
+
+
 set_terminal_size()
 signal.signal(signal.SIGWINCH, lambda _s, _f: set_terminal_size())
 
-import log
 
 CHUNK_SIZE = 4 * 1024 * 1024
 VIMEO_API_BASE = "https://api.vimeo.com"
 
+
 class UploadFailed(BaseException):
     pass
+
 
 @log.make_loggable
 class StatusPrinter(threading.Thread):
@@ -57,7 +64,7 @@ class StatusPrinter(threading.Thread):
             try:
                 item = self.queue.get(block=True, timeout=1)
                 if item is None:
-# Let this thread die, upload is complete
+                    # Let this thread die, upload is complete
                     self.debug("Got thread termination msg")
                     break
 
@@ -71,10 +78,9 @@ class StatusPrinter(threading.Thread):
                 remaining_time = time_left(self.size, offset, self.start_time, now)
 
                 msg = "|%s%s| %02d%% ETA: {eta}" % (
-                        "-" * (marked),
-                        " " * (width - marked),
-                        progress,
-                        # time_left(size, offset, self.start_time, now)
+                      "-" * (marked),
+                      " " * (width - marked),
+                      progress,
                 )
                 if last:
                     msg += " (%s/s)" % upload_speed(CHUNK_SIZE, now - last)
@@ -83,10 +89,10 @@ class StatusPrinter(threading.Thread):
                 last = now
 
             except Queue.Empty:
-# Update ETA, write line
+                # Update ETA, write line
                 if msg and remaining_time:
                     remaining_time -= 1
-# This is worthwhile even if the message hasn't changed, because of the spinner
+                # This is worthwhile even if the message hasn't changed, because of the spinner
                 if msg:
                     self.write_line(msg.format(eta=human_readable_time(remaining_time)))
         self.debug("StatusWriter is terminating")
@@ -99,7 +105,8 @@ def status_line():
             for i in '-\\|/':
                 yield i
     next_char_iter = _next_char()
-    next_char = lambda: next_char_iter.next()
+    next_char = lambda: next_char_iter.next() # noqa E731
+
     def write_status_line(msg):
         sys.stdout.write("\33[2K\r")
         sys.stdout.write("[%s] " % (next_char()))
@@ -108,6 +115,7 @@ def status_line():
     yield write_status_line
     sys.stdout.write("\33[2K\r")
     sys.stdout.flush()
+
 
 def human_readable_size(size):
     multiplier = 1
@@ -121,8 +129,9 @@ def human_readable_size(size):
             return "%d%s" % (float(size) / multiplier, unit)
     return "%dt" % (float(size) / multiplier)
 
+
 def human_readable_time(seconds):
-# Super hacky, but we want to support handing numerics around elsewhere
+    # Super hacky, but we want to support handing numerics around elsewhere
     if seconds is None:
         return "unknown"
 
@@ -136,10 +145,11 @@ def human_readable_time(seconds):
     out += "%ds" % seconds
     return out
 
+
 def time_left(size, uploaded, start_time, now):
     dt = float(now) - float(start_time)
     if dt < 1:
-# Unlikely to have useful data extrapolating from less than a second
+        # Unlikely to have useful data extrapolating from less than a second
         return None
     ds = float(uploaded)
 
@@ -150,34 +160,36 @@ def time_left(size, uploaded, start_time, now):
 def upload_speed(byts, dt):
     return human_readable_size(float(byts) / dt)
 
+
 class Uploader(object):
     pass
+
 
 @log.make_loggable
 class YoutubeUploader(Uploader):
     def __init__(self, cfg, noop):
-# This is sort of shitty, but the dependencies for this thing are the fucking worst, so we don't try to get em till we need em
+        # This is sort of shitty, but the dependencies for this thing are the fucking worst, so we don't try to get em till we need em
         self.cfg = cfg
         self.noop = noop
 
     def _get_authenticated_service(self):
         from googleapiclient.discovery import build
-        from oauth2client.client import AccessTokenCredentials, GoogleCredentials
+        from oauth2client.client import GoogleCredentials
         API_SERVICE_NAME = 'youtube'
         API_VERSION = 'v3'
 
         # credentials = AccessTokenCredentials(self.token, 'flysight-manager/0.0.0')
         credentials = GoogleCredentials(
-                self.cfg.access_token,
-                self.cfg.client_id,
-                self.cfg.client_secret,
-                self.cfg.refresh_token,
-                datetime.datetime(2018, 3, 1, 1, 37, 8, 846706), # lol
-                self.cfg.token_uri,
-                'flysight-manager/%s' % VERSION)
+            self.cfg.access_token,
+            self.cfg.client_id,
+            self.cfg.client_secret,
+            self.cfg.refresh_token,
+            datetime.datetime(2018, 3, 1, 1, 37, 8, 846706), # lol
+            self.cfg.token_uri,
+            'flysight-manager/%s' % VERSION)
 
         self.debug("creating service object")
-        return build(API_SERVICE_NAME, API_VERSION, credentials = credentials)
+        return build(API_SERVICE_NAME, API_VERSION, credentials=credentials)
 
     def upload(self, fs_path, logical_path):
         """The logical path abstraction is a bit goofy"""
@@ -191,23 +203,23 @@ class YoutubeUploader(Uploader):
         self.info("Uploading %s bytes from %s as name: %s description: %s" % (human_readable_size(size), filename, title, description))
 
         body = {
-                "snippet": {
-                    "title": title,
-                    "description": description,
-                    "tags": [],
-                    "categoryId": "17", # sports, why not
-                    },
-                "status": {
-                    "privacyStatus": "unlisted",
-                    }
-                }
+            "snippet": {
+                "title": title,
+                "description": description,
+                "tags": [],
+                "categoryId": "17", # sports, why not
+            },
+            "status": {
+                "privacyStatus": "unlisted",
+            }
+        }
 
         # Call the API's videos.insert method to create and upload the video.
         request = youtube.videos().insert(
-                  part=','.join(body.keys()),
-                  body=body,
-                  media_body=MediaFileUpload(filename, chunksize=CHUNK_SIZE, resumable=True)
-                  )
+            part=','.join(body.keys()),
+            body=body,
+            media_body=MediaFileUpload(filename, chunksize=CHUNK_SIZE, resumable=True)
+        )
         self.debug("Created insert object")
 
         start = time.time()
@@ -230,12 +242,13 @@ class YoutubeUploader(Uploader):
                             write_status_line('[youtube] The upload failed with an unexpected response: %s\n' % response)
                             raise UploadFailed(str(response))
         finally:
-# TODO Turns out YT also does the "partial upload" thing
+            # TODO Turns out YT also does the "partial upload" thing
             printer.queue.put(None)
-        self.info("Uploaded {title} in {t}"
-                    .format(
-                        title=title,
-                        t = human_readable_time(int(time.time() - start))))
+        self.info("Uploaded {title} in {t}".format(
+            title=title,
+            t=human_readable_time(int(time.time() - start)))
+        )
+
 
 @log.make_loggable
 class VimeoUploader(Uploader):
@@ -248,22 +261,22 @@ class VimeoUploader(Uploader):
 
     def _post(self, url, payload):
         headers = {
-                    "Authorization": self._authorization_header(),
-                    "Content-Type": "application/json",
-                    }
+            "Authorization": self._authorization_header(),
+            "Content-Type": "application/json",
+        }
         resp = requests.post(VIMEO_API_BASE + url,
-                headers = headers,
-                data = json.dumps(payload),
-                )
+                             headers=headers,
+                             data=json.dumps(payload),
+                             )
         return resp
 
     def _delete(self, url):
         headers = {
-                    "Authorization": self._authorization_header(),
-                    }
+            "Authorization": self._authorization_header(),
+        }
         resp = requests.delete(VIMEO_API_BASE + url,
-                headers = headers,
-                )
+                               headers=headers,
+                               )
         return resp
 
     def upload(self, fs_path, logical_path):
@@ -281,8 +294,8 @@ class VimeoUploader(Uploader):
             "privacy": {
                 "download": "false",
                 "view": "unlisted",
-                }
-            })
+            }
+        })
 
         data = resp.json()
         video_uri = data['uri']
@@ -318,10 +331,10 @@ class VimeoUploader(Uploader):
                     uploader.upload_chunk()
                 printer.queue.put(None)
                 printer.join()
-                write_status_line("[vimeo] Uploaded {name} in {t}\n"
-                        .format(
-                            name=name,
-                            t = human_readable_time(int(time.time() - start))))
+                write_status_line("[vimeo] Uploaded {name} in {t}\n" .format(
+                    name=name,
+                    t=human_readable_time(int(time.time() - start)))
+                )
         except Exception as e:
             printer.queue.put(None)
             delete_invalid_video(str(e))
@@ -348,14 +361,13 @@ class DropboxUploader(Uploader):
                 data = fh.read(1024)
                 if not data:
                     break
-                hasher.update(date)
+                hasher.update(data)
             if hasher.hexdigest() == metadata.content_hash:
                 self.info("Already uploaded with hash %s, skipping" % metadata.content_hash)
                 return
 
         self.info("Uploading %s bytes from %s to %s" % ((human_readable_size(size)), fs_path, logical_path))
         with open(fs_path, 'rb') as fh, status_line() as write_status_line:
-            last = None
             start = time.time()
             if sys.stdout.isatty():
                 printer = StatusPrinter(start, size, write_status_line)
@@ -376,18 +388,16 @@ class DropboxUploader(Uploader):
                         printer.queue.put(None)
                         write_status_line("[dropbox] Uploading last chunk (%s/s)\n" % upload_speed(size, time.time() - start))
                     res = self.dropbox.files_upload_session_finish(fh.read(CHUNK_SIZE),
-                                                    cursor,
-                                                    commit)
-                    self.info("Uploaded {p.name} to {p.path_lower} in {t}"
-                                .format(
-                                    p = res,
-                                    t = human_readable_time(int(time.time() - start))))
+                                                                   cursor,
+                                                                   commit)
+                    self.info("Uploaded {p.name} to {p.path_lower} in {t}".format(
+                              p=res,
+                              t=human_readable_time(int(time.time() - start))))
                 else:
                     if sys.stdout.isatty():
                         printer.queue.put((time.time(), cursor.offset))
 
-                    last = time.time()
                     self.dropbox.files_upload_session_append(fh.read(CHUNK_SIZE),
-                                                    cursor.session_id,
-                                                    cursor.offset)
+                                                             cursor.session_id,
+                                                             cursor.offset)
                     cursor.offset = fh.tell()

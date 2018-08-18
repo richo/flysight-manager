@@ -2,6 +2,8 @@
 ignore =
 # I don't care about long lines
     E501
+# 2 spaces before comments is weird
+    E261
 exclude =
     .git,
     __pycache__,
