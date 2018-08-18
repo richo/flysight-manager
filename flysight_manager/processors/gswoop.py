@@ -9,6 +9,7 @@ from flysight_manager.upload_queue import UploadQueueEntry
 # FIXME: This is copypasted from the flysight handler
 TIME_RE = re.compile('(?P<year>\d{2})-(?P<month>\d{2})-(?P<day>\d{2})/(?P<hour>\d{2})-(?P<minute>\d{2})-(?P<second>\d{2})')
 
+
 @log.make_loggable
 class gSwoopProcessor(object):
     def __init__(self, cfg):
@@ -21,9 +22,9 @@ class gSwoopProcessor(object):
             time = TIME_RE.search(flight.fs_path)
             year, month, day, hour, minute, second = time.groups()
             logical_path = os.path.join(
-                    '/', '%s-%s-%s' % (year, month, day),
-                    'gswoop', '%s-%s-%s.%s' % (hour, minute, second, extension)
-                    )
+                '/', '%s-%s-%s' % (year, month, day),
+                'gswoop', '%s-%s-%s.%s' % (hour, minute, second, extension)
+            )
 
             queue.append(UploadQueueEntry(i, logical_path))
 
