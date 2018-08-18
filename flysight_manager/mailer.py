@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 import sendgrid
-from sendgrid.helpers.mail import *
+from sendgrid.helpers.mail import Mail, Email, Content
 import log
+
 
 @log.make_loggable
 class Mailer(object):
@@ -10,8 +11,6 @@ class Mailer(object):
         self.sg = sendgrid.SendGridAPIClient(apikey=self.token)
 
     def mail(self, mail_to, mail_from, subject, body, headers={}):
-        message = Mail()
-
         content = Content("text/html", body)
         mail = Mail(Email(mail_from), subject, Email(mail_to), content)
 
