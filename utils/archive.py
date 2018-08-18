@@ -4,10 +4,10 @@ from itertools import chain, imap
 import argparse
 
 import flysight_manager.log as log
-from flysight_manager.config import Configuration, get_poller
+from flysight_manager.config import Configuration
 
-import dropbox.files
 from dropbox.files import FileMetadata, FolderMetadata, RelocationPath
+
 
 def get_argparser():
     parser = argparse.ArgumentParser()
@@ -15,6 +15,7 @@ def get_argparser():
                         help="Two digit year to archive")
 
     return parser
+
 
 def get_root_contents(db):
     res = db.files_list_folder('')
@@ -25,6 +26,7 @@ def get_root_contents(db):
             break
         res = db.files_list_folder_continue(res.cursor)
 
+
 def get_files(db, folder, recursive):
     res = db.files_list_folder(folder, recursive=recursive)
     while True:
@@ -33,6 +35,7 @@ def get_files(db, folder, recursive):
         if not res.has_more or True:
             break
         res = db.files_list_folder_continue(res.cursor)
+
 
 def recursively_delete_if_empty(db, path):
     """Attempts to delete `path` if empty, first recursively deleting any empty
@@ -45,7 +48,7 @@ def recursively_delete_if_empty(db, path):
     """
     for md in get_files(db, path, recursive=False):
         if isinstance(md, FileMetadata):
-# This is a file, we're not empty
+            # This is a file, we're not empty
             log.info("Found a file at %s, bailing" % md.path_lower)
             return False
         elif isinstance(md, FolderMetadata):
@@ -57,6 +60,7 @@ def recursively_delete_if_empty(db, path):
     log.warn("%s is empty, deleting" % path)
     db.files_delete(path)
     return True
+
 
 def main():
     cfg = Configuration()
@@ -91,11 +95,11 @@ def main():
         return
     job = res.get_async_job_id()
 
-    status = db.files_move_batch_check(res.get_async_job_id())
+    status = db.files_move_batch_check(job)
     while status.is_in_progress():
         log.info("Waiting for migration to complete..")
         time.sleep(1)
-        status = db.files_move_batch_check(res.get_async_job_id())
+        status = db.files_move_batch_check(job)
     if status.is_complete():
         log.info("Migration complete!")
     else:
@@ -105,6 +109,7 @@ def main():
     for md in matches:
         log.info("Attempting to remove %s" % md.path_lower)
         recursively_delete_if_empty(db, md.path_lower)
+
 
 if __name__ == '__main__':
     main()
