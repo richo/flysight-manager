@@ -4,6 +4,7 @@ from flysight_manager import uploader
 import flysight_manager.log
 flysight_manager.log.suppress_logs()
 
+
 class TestUploaderSizeFormatter(unittest.TestCase):
     def test_suffix(self):
         hrs = uploader.human_readable_size
