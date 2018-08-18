@@ -11,6 +11,8 @@ from .config import Configuration, get_poller
 from .upload_queue import UploadQueue, UploadQueueEntry
 from .uploader import VimeoUploader, YoutubeUploader
 from .report import UploadReport
+from .notifier import PushoverNotifier
+from .file_manager import GroupPoller
 
 
 class UnsupportedPlatformError(Exception):
@@ -46,8 +48,16 @@ class GoProMain(Main):
     def poller_class(self):
         return get_poller('gopro')
 
-    def poller(self):
-        return self.poller_class('gopro', self.cfg)
+    def wait_for_attach(self, cameras):
+        if self.args.daemon:
+            group = GroupPoller(map(lambda x: x.poller, cameras.values()))
+            group.poll_for_attach()
+            attached_cameras = get_attached_cameras(cameras)
+        else:
+            attached_cameras = get_attached_cameras(cameras)
+            if len(attached_cameras) == 0:
+                log.fatal("No cameras attached")
+        return attached_cameras
 
     def upload_run(self):
         cameras = {}
@@ -65,12 +75,7 @@ class GoProMain(Main):
             mountpoints, uuids = zip(*map(lambda x: (x.cfg.mountpoint, x.cfg.uuid), cameras.values()))
             self.info("Watching for gopros at %s (%s)" % (mountpoints, uuids))
 
-            attached_cameras = get_attached_cameras(cameras)
-            if self.args.daemon:
-                self.poller().poll_for_attach(already_attached=already_seen)
-            else:
-                if len(attached_cameras) == 0:
-                    raise RuntimeError("No cameras attached")
+            attached_cameras = self.wait_for_attach(cameras)
 
             for camera in attached_cameras:
                 self.info("Uploading video files from %s" % camera.name)
