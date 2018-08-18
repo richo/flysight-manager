@@ -6,12 +6,13 @@ import log
 from .flysight import Flysight
 from .gopro import GoPro
 
-DEFAULT_INTERVAL=10
+DEFAULT_INTERVAL = 10
 
 
 class NotMountedError(Exception):
     """Flysight was not detected"""
     pass
+
 
 @log.make_loggable
 class GroupPoller(object):
@@ -29,9 +30,9 @@ class GroupPoller(object):
 class AbstractPoller(object):
 
     device_paths = {
-            'flysight': 'config.txt',
-            'gopro': 'DCIM',
-            }
+        'flysight': 'config.txt',
+        'gopro': 'DCIM',
+    }
 
     def __init__(self, name, ty):
         self.interval = DEFAULT_INTERVAL
@@ -49,11 +50,11 @@ class AbstractPoller(object):
         while not self.device_attached(path):
             if immediate_return:
                 self.debug("%s does not exist" %
-                        (self.name))
+                           (self.name))
                 return False
             else:
                 self.debug("%s does not exist, sleeping for %ds" %
-                        (self.name, self.interval))
+                           (self.name, self.interval))
                 time.sleep(self.interval)
         return True
 
@@ -88,7 +89,7 @@ class DirectoryPoller(AbstractPoller):
 
 @log.make_loggable
 class VolumePoller(AbstractPoller):
-# TODO Make this unmount on exit always
+    # TODO Make this unmount on exit always
     def __init__(self, name, uuid, ty):
         self.uuid = uuid
         super(VolumePoller, self).__init__(name, ty)

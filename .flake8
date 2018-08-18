@@ -1,0 +1,10 @@
+[flake8]
+ignore =
+# I don't care about long lines
+    E501
+exclude =
+    .git,
+    __pycache__,
+    build,
+    dist
+max-complexity = 10
