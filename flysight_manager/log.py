@@ -3,6 +3,12 @@ import sys
 import functools
 import traceback
 
+class Log(object):
+    OUTPUT = sys.stdout
+
+def suppress_logs():
+    Log.OUTPUT = open(os.devnull, 'w')
+
 class LogAggregator(object):
     logs = None
 
@@ -23,7 +29,9 @@ def make_logger(c, enabled=lambda: True):
         if enabled():
             fmt = "[%s] %s" % (c, msg)
             LogAggregator.add(fmt % args)
-            print(fmt % args)
+            Log.OUTPUT.write(fmt % args)
+            Log.OUTPUT.write("\n")
+            Log.OUTPUT.flush()
     return inner
 
 

@@ -3,7 +3,9 @@
 import unittest
 from flysight_manager import config
 
-# omg, what even did I do here
+import flysight_manager.log
+flysight_manager.log.suppress_logs()
+
 class TestableConfiguration(config.Configuration):
     CONFIG_FILE = 'flysight-manager.ini.example'
 
