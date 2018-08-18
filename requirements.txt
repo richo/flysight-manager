@@ -1,10 +1,11 @@
 dropbox
-sendgrid
-toml
-urllib3
-requests
-tuspy
-jinja2
+flake8
 google-api-python-client
 google-auth-httplib2
 google-auth-oauthlib
+jinja2
+requests
+sendgrid
+toml
+tuspy
+urllib3
