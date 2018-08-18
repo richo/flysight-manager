@@ -1,13 +1,10 @@
 #!/usr/bin/env python
 
-import os
-import sys
 import argparse
-import processors
 
 import log
 from .run import Main
-from .config import Configuration, get_poller
+from .config import get_poller
 from .upload_queue import UploadQueue, UploadQueueEntry
 from .uploader import VimeoUploader, YoutubeUploader
 from .report import UploadReport
@@ -22,8 +19,10 @@ class UnsupportedPlatformError(Exception):
 class Camera(object):
     pass
 
+
 def get_attached_cameras(cameras):
     return filter(lambda x: x.poller.device_attached("DCIM"), cameras.values())
+
 
 @log.make_loggable
 class GoProMain(Main):
@@ -68,8 +67,6 @@ class GoProMain(Main):
             camera.poller = self.poller_class(name, cfg)
             cameras[name] = camera
 
-        already_seen = False
-
         while True:
             report = self.start_report(UploadReport)
             mountpoints, uuids = zip(*map(lambda x: (x.cfg.mountpoint, x.cfg.uuid), cameras.values()))
@@ -86,12 +83,11 @@ class GoProMain(Main):
                     queue.notify_on_upload(PushoverNotifier(
                         cfg.pushover_cfg.token,
                         cfg.pushover_cfg.user,
-                        ))
+                    ))
 
                 raw_queue = queue.get_directory(camera.name)
                 for video in gopro.videos():
                     raw_queue.append(UploadQueueEntry(video.fs_path, video.upload_path))
-
 
                 @self.wrapper(report)
                 def network_operations():
@@ -107,12 +103,12 @@ class GoProMain(Main):
                 self.info("Done uploading")
             if not self.args.daemon:
                 break
-            already_seen = True
         self.info("Done")
 
 
 def main():
     GoProMain().run()
+
 
 if __name__ == '__main__':
     main()
