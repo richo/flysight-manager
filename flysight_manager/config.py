@@ -29,6 +29,9 @@ class YoutubeConfig(object):
 class SendgridConfig(object):
     pass
 
+class PushoverConfig(object):
+    pass
+
 class CameraConfig(object):
     def __init__(self, name, cfg):
         self._name = name
@@ -140,6 +143,10 @@ class Configuration(object):
             self.sendgrid_enabled = True
             self.sendgrid_cfg = self.load_sendgrid_opts(cfg)
 
+        if enabled("pushover"):
+            self.pushover_enabled = True
+            self.pushover_cfg = self.load_pushover_opts(cfg)
+
     def load_dropbox_opts(self, cfg):
         get = lambda x: cfg["dropbox"][x]
         _cfg = DropboxConfig()
@@ -160,6 +167,13 @@ class Configuration(object):
         _cfg.from_addr = get("from")
         _cfg.to_addr = get("to")
         _cfg.subject = get("subject")
+        return _cfg
+
+    def load_pushover_opts(self, cfg):
+        get = lambda x: cfg["pushover"][x]
+        _cfg = PushoverConfig()
+        _cfg.token = get("token")
+        _cfg.user = get("user")
         return _cfg
 
     def load_youtube_opts(self, cfg):

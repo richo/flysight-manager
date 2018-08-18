@@ -49,6 +49,11 @@ class FlysightMain(Main):
             flysight = self.poller.mount(self.cfg.flysight_cfg.mountpoint)
 
             queue = UploadQueue()
+            if cfg.pushover_enabled:
+                queue.notify_on_completion(PushoverNotifier(
+                    cfg.pushover_cfg.token,
+                    cfg.pushover_cfg.user,
+                    ))
 
             if self.cfg.flysight_enabled:
                 raw_queue = queue.get_directory("raw")

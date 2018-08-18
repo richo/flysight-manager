@@ -77,6 +77,11 @@ class GoProMain(Main):
                 gopro = camera.poller.mount(camera.cfg.mountpoint)
 
                 queue = UploadQueue()
+                if cfg.pushover_enabled:
+                    queue.notify_on_upload(PushoverNotifier(
+                        cfg.pushover_cfg.token,
+                        cfg.pushover_cfg.user,
+                        ))
 
                 raw_queue = queue.get_directory(camera.name)
                 for video in gopro.videos():
