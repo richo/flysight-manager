@@ -2,5 +2,5 @@
 import sys
 if __name__ == '__main__':
     sys.path.append('.')
-    import flysight_manager
+    from flysight_manager import flysight_manager
     flysight_manager.main()

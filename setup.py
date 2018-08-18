@@ -9,22 +9,7 @@ Package information for flysight-manager package.
 from setuptools import setup
 import unittest
 
-from flysight_manager import VERSION
-
-requires = [
-    'dropbox',
-    'sendgrid',
-    'toml',
-    'idna',
-    'chardet',
-    'urllib3',
-    'requests',
-    'tuspy',
-    'jinja2',
-    'google-api-python-client',
-    'google-auth-httplib2',
-    'google-auth-oauthlib',
-]
+from flysight_manager.version import VERSION
 
 def test_suite():
     test_loader = unittest.TestLoader()
@@ -49,6 +34,5 @@ setup(
                 'gopro-manager = flysight_manager.gopro_manager:main',
                 ],
             },
-        install_requires=requires,
         test_suite='setup.test_suite',
         )
