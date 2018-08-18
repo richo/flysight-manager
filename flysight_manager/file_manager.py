@@ -61,7 +61,7 @@ class AbstractPoller(object):
         path = self.device_paths[self.ty]
 
         if not self.device_attached(path):
-            raise NotMountedError("%s is not mounted" % self.ty)
+            log.fatal("%s is not mounted" % self.ty)
 
     def mount(self):
         raise NotImplementedError
