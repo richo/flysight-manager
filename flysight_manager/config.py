@@ -1,10 +1,10 @@
+# flake8: noqa
 import sys
 import toml
 
 import log
 
 from .uploader import DropboxUploader
-from .processors.gswoop import gSwoopProcessor
 from .file_manager import DirectoryPoller, VolumePoller
 
 SECT = 'flysight-manager'
@@ -17,20 +17,26 @@ class ConfigError(Exception):
 class FlysightConfig(object):
     pass
 
+
 class DropboxConfig(object):
     pass
+
 
 class VimeoConfig(object):
     pass
 
+
 class YoutubeConfig(object):
     pass
+
 
 class SendgridConfig(object):
     pass
 
+
 class PushoverConfig(object):
     pass
+
 
 class CameraConfig(object):
     def __init__(self, name, cfg):
