@@ -7,4 +7,3 @@ exclude =
     __pycache__,
     build,
     dist
-max-complexity = 10

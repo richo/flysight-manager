@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 
 import os
-import sys
 import argparse
 import processors
 
 import log
 from run import Main
-from .config import Configuration, get_poller
+from .config import get_poller
 from .upload_queue import UploadQueue, UploadQueueEntry
 from .report import UploadReport
+from .notifier import PushoverNotifier
+
 
 class UnsupportedPlatformError(Exception):
     pass
@@ -51,7 +52,7 @@ class FlysightMain(Main):
                 queue.notify_on_completion(PushoverNotifier(
                     cfg.pushover_cfg.token,
                     cfg.pushover_cfg.user,
-                    ))
+                ))
 
             if self.cfg.flysight_enabled:
                 raw_queue = queue.get_directory("raw")
@@ -62,7 +63,6 @@ class FlysightMain(Main):
                         processor = processors.get_processor(processor_name)(cfg)
                         processor.process(flight, queue)
 
-
                 @self.wrapper(report)
                 def network_operations():
                     """Encapsulate network operations that might fail.
@@ -71,7 +71,7 @@ class FlysightMain(Main):
                     this block may be invoked more than once, but
                     that's safe.
                     """
-                    queue.process_queue(self.uploaders, preserve=global_cfg.preserve)
+                    queue.process_queue(self.uploaders, preserve=self.cfg.preserve)
 
                 network_operations()
 
@@ -87,8 +87,10 @@ class FlysightMain(Main):
             already_seen = True
         self.info("Done")
 
+
 def main():
     FlysightMain().run()
+
 
 if __name__ == '__main__':
     main()
