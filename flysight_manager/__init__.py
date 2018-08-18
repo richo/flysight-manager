@@ -11,7 +11,7 @@ from .config import Configuration, get_poller
 from .upload_queue import UploadQueue, UploadQueueEntry
 from .report import UploadReport
 
-VERSION = '0.0.0'
+from .version import VERSION
 
 class UnsupportedPlatformError(Exception):
     pass

@@ -9,7 +9,7 @@ Package information for flysight-manager package.
 from setuptools import setup
 import unittest
 
-from flysight_manager import VERSION
+from flysight_manager.version import VERSION
 
 requires = [
     'dropbox',
