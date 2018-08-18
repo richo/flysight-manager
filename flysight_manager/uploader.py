@@ -13,10 +13,9 @@ import subprocess
 import signal
 import hashlib
 
-import flysight_manager
-
 import dropbox.files
 from dropbox.files import WriteMode
+from .version import VERSION
 
 TERMINAL_WIDTH = 80
 STATUS_WIDTH = 60
@@ -172,7 +171,7 @@ class YoutubeUploader(Uploader):
                 self.cfg.refresh_token,
                 datetime.datetime(2018, 3, 1, 1, 37, 8, 846706), # lol
                 self.cfg.token_uri,
-                'flysight-manager/%s' % flysight_manager.VERSION)
+                'flysight-manager/%s' % VERSION)
 
         self.debug("creating service object")
         return build(API_SERVICE_NAME, API_VERSION, credentials = credentials)

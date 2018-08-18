@@ -1,1 +1,1 @@
-from .version import VERSION
+VERSION = open('flysight_manager/VERSION').read().strip()
