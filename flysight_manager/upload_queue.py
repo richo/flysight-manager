@@ -2,11 +2,13 @@ import os
 import collections
 import log
 
+
 @log.make_loggable
 class UploadQueueEntry(object):
     def __init__(self, physical_path, logical_path):
         self.physical_path = physical_path
         self.logical_path = logical_path
+
 
 @log.make_loggable
 class UploadQueue(object):
