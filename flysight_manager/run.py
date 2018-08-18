@@ -1,6 +1,7 @@
 import log
-from .config import Configuration, get_poller
+from .config import Configuration
 from .mailer import Mailer
+
 
 @log.make_loggable
 class Main(object):
@@ -31,11 +32,11 @@ class Main(object):
             self.wrapper = log.catch_exceptions_and_retry
 
     def start_report(self, report_class):
-        report = report_class(self.mailer,
-                { 'to': self.cfg.sendgrid_cfg.to_addr,
-                  'from': self.cfg.sendgrid_cfg.from_addr,
-                  'subject': self.cfg.sendgrid_cfg.subject,
-                    })
+        report = report_class(self.mailer, {
+            'to': self.cfg.sendgrid_cfg.to_addr,
+            'from': self.cfg.sendgrid_cfg.from_addr,
+            'subject': self.cfg.sendgrid_cfg.subject,
+        })
         return report
 
     def configure_uploaders(self):
