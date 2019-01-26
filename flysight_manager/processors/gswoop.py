@@ -7,7 +7,7 @@ from flysight_manager.upload_queue import UploadQueueEntry
 
 
 # FIXME: This is copypasted from the flysight handler
-TIME_RE = re.compile('(?P<year>\d{2})-(?P<month>\d{2})-(?P<day>\d{2})/(?P<hour>\d{2})-(?P<minute>\d{2})-(?P<second>\d{2})')
+TIME_RE = re.compile(r'(?P<year>\d{2})-(?P<month>\d{2})-(?P<day>\d{2})/(?P<hour>\d{2})-(?P<minute>\d{2})-(?P<second>\d{2})')
 
 
 @log.make_loggable
